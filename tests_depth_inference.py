@@ -1,50 +1,39 @@
 import os
 import sys
 
-import matplotlib.pyplot as plt
-import numpy as np
+import cv2
 import torch
-import torchvision.transforms as T
-
-from PIL import Image
+import numpy as np
 
 sys.path.append(os.path.join(os.getcwd(), "Depth_Anything_V2"))
+from depth_anything_v2.dpt import DepthAnythingV2
 
-from depth_anything_v2.util.transform import Resize, NormalizeImage, PrepareForNet
-from depth_anything_v2.dpt import DepthAnything
+DEVICE = 'cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'
+print(f"Using device: {DEVICE}")
 
-# Caminho para a imagem de entrada
-img_path = "SIBGRAPI2025\datasets\\rgbd_dataset_freiburg1_xyz\\rgb\\1305031102.243211.png"
+model_configs = {
+    'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
+    'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
+    'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
+    'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
+}
 
-# Carregamento e pré-processamento
-transform = T.Compose([
-    Resize(384, 512),
-    NormalizeImage(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    PrepareForNet()
-])
+encoder = 'vits' # or 'vitl', 'vitb', 'vitg'
 
-# Carregar imagem
-image = Image.open(img_path).convert('RGB')
-image_np = np.array(image)  # <- CONVERSÃO CRÍTICA
+model = DepthAnythingV2(**model_configs[encoder])
+model.load_state_dict(torch.load(f'SIBGRAPI2025\checkpoints\depth_anything_v2_{encoder}.pth', map_location='cpu'))
+model = model.to(DEVICE).eval()
 
-# Aplicar transformações
-sample = transform({'image': image_np})
-image_tensor = torch.from_numpy(sample['image']).unsqueeze(0).float()
-img_input = image_tensor
+raw_img = cv2.imread('SIBGRAPI2025\datasets\\rgbd_dataset_freiburg1_xyz\\rgb\\1305031102.175304.png')
+depth = model.infer_image(raw_img)  # HxW raw depth map in numpy
 
-# Carregar modelo
-model = DepthAnything.from_pretrained(
-    "SIBGRAPI2025/checkpoints/depth_anything_vits.pth"
-    ).to("cuda" if torch.cuda.is_available() else "cpu").eval()
+# Normalização e coloração
+depth_normalized = cv2.normalize(depth, None, 0, 255, cv2.NORM_MINMAX)
+depth_uint8 = depth_normalized.astype(np.uint8)
+depth_colored = cv2.applyColorMap(depth_uint8, cv2.COLORMAP_INFERNO)
 
-with torch.no_grad():
-    depth = model(img_input.to(model.device))
-
-depth_map = depth.squeeze().cpu().numpy()
-np.save("SIBGRAPI2025/depth_output.npy", depth_map)
-
-# Visualizar profundidade
-plt.imshow(depth.squeeze().cpu(), cmap='inferno')
-plt.title("Depth Map")
-plt.axis("off")
-plt.show()
+# Visualização
+concatenate_img = cv2.hconcat([raw_img, depth_colored])
+cv2.imshow('RGB + Depth Map', concatenate_img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
