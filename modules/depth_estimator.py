@@ -4,12 +4,11 @@
     inference, and handle the model's configuration.
 """
 import os
-import sys
+# import sys
 import torch
 import numpy as np
 
-sys.path.append(os.path.join(os.getcwd(), "Depth_Anything_V2"))
-from depth_anything_v2.dpt import DepthAnythingV2
+from Depth_Anything_V2.depth_anything_v2.dpt import DepthAnythingV2
 
 
 class DepthEstimator:
@@ -20,7 +19,7 @@ class DepthEstimator:
     """
 
     def __init__(self, encoder='vits',
-                 checkpoint_dir='SIBGRAPI2025/checkpoints',
+                 checkpoint_dir='checkpoints',
                  device=None) -> None:
         """
         Initializes the DepthEstimator with the specified encoder, checkpoint

@@ -134,8 +134,8 @@ class DepthPointCloudApp:
 if __name__ == '__main__':
     app = DepthPointCloudApp(
         mode='webcam',  # images or webcam
-        image_dir='SIBGRAPI2025/datasets/rgbd_dataset_freiburg1_xyz/rgb',
-        output_dir='SIBGRAPI2025/results/depth_maps_2/test_1',
+        image_dir='datasets/rgbd_dataset_freiburg1_xyz/rgb',
+        output_dir='results/depth_maps_2/test_1',
         save_output=False,
         camera_idx=0
     )
