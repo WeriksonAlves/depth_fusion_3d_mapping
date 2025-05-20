@@ -6,6 +6,7 @@
 import os
 import sys
 import torch
+import numpy as np
 
 sys.path.append(os.path.join(os.getcwd(), "Depth_Anything_V2"))
 from depth_anything_v2.dpt import DepthAnythingV2
@@ -69,12 +70,12 @@ class DepthEstimator:
         model.load_state_dict(torch.load(ckpt_path, map_location=self.device))
         return model.to(self.device).eval()
 
-    def infer_depth(self, rgb_img: torch.Tensor) -> torch.Tensor:
+    def infer_depth(self, rgb_img: np.ndarray) -> torch.Tensor:
         """
         Infers the depth map from the input RGB image.
 
         Args:
-            rgb_img (torch.Tensor): The input RGB image as a PyTorch tensor.
+            rgb_img: The input RGB image as a PyTorch tensor.
         Returns:
             torch.Tensor: The inferred depth map as a PyTorch tensor.
         """

@@ -1,11 +1,9 @@
 """
     Script to process point clouds from RGB and depth images.
+
     This module provides a class to create point clouds from RGB and depth
     images, filter point clouds using voxel downsampling and statistical
     outlier removal, and visualize point clouds in a live window.
-    The PointCloudProcessor class handles the creation and filtering of
-    point clouds, while the LivePointCloudVisualizer class manages the
-    visualization of point clouds in a live window.
 """
 
 import numpy as np
@@ -74,44 +72,3 @@ class PointCloudProcessor:
         pcd = pcd.voxel_down_sample(voxel_size)
         pcd, _ = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
         return pcd
-
-
-class LivePointCloudVisualizer:
-    """
-    A class to visualize point clouds in a live window using Open3D.
-    This class provides methods to update the point cloud in the visualizer
-    and close the visualizer window.
-    """
-
-    def __init__(self) -> None:
-        """
-        Initializes the visualizer with a window and a point cloud object.
-        """
-        # Create a visualizer window
-        self.vis = o3d.visualization.Visualizer()
-        self.vis.create_window("Live Point Cloud", 960, 540)
-        self.pcd = o3d.geometry.PointCloud()
-        self.initialized = False
-
-    def update(self, new_pcd: o3d.geometry.PointCloud) -> None:
-        """
-        Updates the point cloud in the visualizer.
-
-        Args:
-            new_pcd: The new point cloud to display.
-        """
-        self.pcd.points = new_pcd.points
-        self.pcd.colors = new_pcd.colors
-        if not self.initialized:
-            self.vis.add_geometry(self.pcd)
-            self.initialized = True
-        else:
-            self.vis.update_geometry(self.pcd)
-        self.vis.poll_events()
-        self.vis.update_renderer()
-
-    def close(self) -> None:
-        """
-        Closes the visualizer window.
-        """
-        self.vis.destroy_window()
