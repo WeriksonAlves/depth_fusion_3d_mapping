@@ -1,15 +1,9 @@
 """
-    Script to visualize point clouds in a live window using Open3D.
+Module for live point cloud visualization using Open3D.
 
-    This module provides a class to create a visualizer window, update the
-    point cloud in the visualizer, and close the visualizer window.
-    The visualizer is designed to work with the PointCloudProcessor class
-    to display the processed point clouds in real-time.
-    The visualizer window is created with a specified width and height,
-    and the point cloud is updated with new data as it becomes available.
-    The visualizer uses Open3D's visualization capabilities to render the
-    point cloud, allowing for real-time updates and interaction.
-    The visualizer can be closed gracefully when no longer needed.
+This class creates an Open3D visualizer window, allowing continuous
+updates of a 3D point cloud in real time. It is designed to be used in
+conjunction with a point cloud generation system.
 """
 
 import open3d as o3d
@@ -17,40 +11,43 @@ import open3d as o3d
 
 class LivePointCloudVisualizer:
     """
-    A class to visualize point clouds in a live window using Open3D.
-    This class provides methods to update the point cloud in the visualizer
-    and close the visualizer window.
+    A class to manage a real-time point cloud visualizer window using Open3D.
     """
 
     def __init__(self) -> None:
         """
-        Initializes the visualizer with a window and a point cloud object.
+        Initializes the visualizer window and an empty point cloud object.
         """
-        # Create a visualizer window
-        self.vis = o3d.visualization.Visualizer()
-        self.vis.create_window("Live Point Cloud", 960, 540)
-        self.pcd = o3d.geometry.PointCloud()
-        self.initialized = False
+        self._visualizer = o3d.visualization.Visualizer()
+        self._visualizer.create_window(
+            window_name="Live Point Cloud",
+            width=960,
+            height=540
+        )
+        self._point_cloud = o3d.geometry.PointCloud()
+        self._initialized = False
 
     def update(self, new_pcd: o3d.geometry.PointCloud) -> None:
         """
-        Updates the point cloud in the visualizer.
+        Updates the displayed point cloud with new data.
 
-        Args:
-            new_pcd: The new point cloud to display.
+        :param: new_pcd (o3d.geometry.PointCloud): The new point cloud data to
+            display.
         """
-        self.pcd.points = new_pcd.points
-        self.pcd.colors = new_pcd.colors
-        if not self.initialized:
-            self.vis.add_geometry(self.pcd)
-            self.initialized = True
+        self._point_cloud.points = new_pcd.points
+        self._point_cloud.colors = new_pcd.colors
+
+        if not self._initialized:
+            self._visualizer.add_geometry(self._point_cloud)
+            self._initialized = True
         else:
-            self.vis.update_geometry(self.pcd)
-        self.vis.poll_events()
-        self.vis.update_renderer()
+            self._visualizer.update_geometry(self._point_cloud)
+
+        self._visualizer.poll_events()
+        self._visualizer.update_renderer()
 
     def close(self) -> None:
         """
-        Closes the visualizer window.
+        Gracefully closes the visualizer window.
         """
-        self.vis.destroy_window()
+        self._visualizer.destroy_window()

@@ -1,81 +1,92 @@
 """
-    Script to estimate depth maps from RGB images using the DepthAnythingV2
-    model. This module provides a class to load the model, perform depth
-    inference, and handle the model's configuration.
+Module for estimating depth maps from RGB images using the DepthAnythingV2
+model. Includes a class that loads the model, performs inference, and manages
+configuration.
 """
+
 import os
-# import sys
-import torch
+from typing import Optional
+
 import numpy as np
+import torch
 
 from Depth_Anything_V2.depth_anything_v2.dpt import DepthAnythingV2
 
 
 class DepthEstimator:
     """
-    A class to estimate depth maps from RGB images using the DepthAnythingV2
-    model. This class provides methods to load the model, perform depth
-    inference, and handle the model's configuration.
+    A wrapper class for the DepthAnythingV2 model that performs depth
+    estimation from RGB images.
     """
 
-    def __init__(self, encoder='vits',
-                 checkpoint_dir='checkpoints',
-                 device=None) -> None:
+    def __init__(self,
+                 encoder: str = 'vits',
+                 checkpoint_dir: str = 'checkpoints',
+                 device: Optional[str] = None) -> None:
         """
-        Initializes the DepthEstimator with the specified encoder, checkpoint
-        directory, and device.
+        Initializes the DepthEstimator.
 
-        Args:
-            encoder (str): The encoder type to use for the model. Options are
-                'vits', 'vitb', 'vitl', 'vitg'.
-            checkpoint_dir (str): Directory path where the model checkpoint is
-                stored.
-            device (str, optional): The device to run the model on. If None,
-                defaults to 'cuda' if available, otherwise 'cpu'.
-        Raises:
-            ValueError: If the specified encoder is not supported.
+        :param: encoder (str): Model encoder to use ('vits', 'vitb', 'vitl',
+            'vitg').
+        :param: checkpoint_dir (str): Path to the directory containing the
+            model checkpoint.
+        :param: device (str, optional): Computation device ('cuda', 'cpu').
+            Defaults to best available.
         """
-        self.encoder = encoder
+        self.encoder = encoder.lower()
         self.device = device or (
             'cuda' if torch.cuda.is_available() else 'cpu')
         self.model = self._load_model(checkpoint_dir)
 
     def _load_model(self, checkpoint_dir: str) -> DepthAnythingV2:
         """
-        Loads the DepthAnythingV2 model with the specified encoder and
-        checkpoint directory.
+        Loads the DepthAnythingV2 model from the specified checkpoint.
 
-        Args:
-            checkpoint_dir (str): Directory path where the model checkpoint is
-                stored.
-        Returns:
-            DepthAnythingV2: The loaded model.
-        Raises:
-            ValueError: If the specified encoder is not supported.
+        :param: checkpoint_dir (str): Path to the checkpoint directory.
+
+        :return: DepthAnythingV2: The configured model ready for inference.
+
+        :raise: ValueError: If an unsupported encoder is provided.
         """
         model_configs = {
-            'vits': {'encoder': 'vits', 'features': 64,
-                     'out_channels': [48, 96, 192, 384]},
-            'vitb': {'encoder': 'vitb', 'features': 128,
-                     'out_channels': [96, 192, 384, 768]},
-            'vitl': {'encoder': 'vitl', 'features': 256,
-                     'out_channels': [256, 512, 1024, 1024]},
-            'vitg': {'encoder': 'vitg', 'features': 384,
-                     'out_channels': [1536, 1536, 1536, 1536]}
+            'vits': {
+                'encoder': 'vits',
+                'features': 64,
+                'out_channels': [48, 96, 192, 384]
+            },
+            'vitb': {
+                'encoder': 'vitb',
+                'features': 128,
+                'out_channels': [96, 192, 384, 768]
+            },
+            'vitl': {
+                'encoder': 'vitl',
+                'features': 256,
+                'out_channels': [256, 512, 1024, 1024]
+            },
+            'vitg': {
+                'encoder': 'vitg',
+                'features': 384,
+                'out_channels': [1536, 1536, 1536, 1536]
+            }
         }
+
+        if self.encoder not in model_configs:
+            raise ValueError(f"Unsupported encoder: {self.encoder}")
+
         model = DepthAnythingV2(**model_configs[self.encoder])
-        ckpt_path = os.path.join(
+        checkpoint_path = os.path.join(
             checkpoint_dir, f'depth_anything_v2_{self.encoder}.pth')
-        model.load_state_dict(torch.load(ckpt_path, map_location=self.device))
+        model.load_state_dict(torch.load(
+            checkpoint_path, map_location=self.device))
         return model.to(self.device).eval()
 
-    def infer_depth(self, rgb_img: np.ndarray) -> torch.Tensor:
+    def infer_depth(self, rgb_image: np.ndarray) -> torch.Tensor:
         """
-        Infers the depth map from the input RGB image.
+        Performs depth inference from an input RGB image.
 
-        Args:
-            rgb_img: The input RGB image as a PyTorch tensor.
-        Returns:
-            torch.Tensor: The inferred depth map as a PyTorch tensor.
+        A:param: rgb_image (np.ndarray): RGB image array (HxWx3).
+
+        :return: orch.Tensor: Estimated depth map.
         """
-        return self.model.infer_image(rgb_img)
+        return self.model.infer_image(rgb_image)

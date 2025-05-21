@@ -1,10 +1,9 @@
 """
-    Script to process point clouds from RGB and depth images.
-
-    This module provides a class to create point clouds from RGB and depth
-    images, filter point clouds using voxel downsampling and statistical
-    outlier removal, and visualize point clouds in a live window.
+Module for processing 3D point clouds from RGB and depth images
+using Open3D. It provides utilities for creating and filtering
+point clouds using voxel downsampling and statistical filtering.
 """
+
 
 import numpy as np
 import open3d as o3d
@@ -12,63 +11,84 @@ import open3d as o3d
 
 class PointCloudProcessor:
     """
-    A class to process point clouds from RGB and depth images.
-    This class provides methods to create point clouds from RGB and depth
-    images, filter point clouds using voxel downsampling and statistical
-    outlier removal, and visualize point clouds in a live window.
+    Handles creation and filtering of point clouds from RGB and
+    depth image inputs.
     """
-    def __init__(self, fx=525.0, fy=525.0, cx=319.5, cy=239.5, width=640,
-                 height=480) -> None:
-        """
-        Initializes the PointCloudProcessor with camera intrinsics.
 
-        Args:
-            fx (float): Focal length in x direction.
-            fy (float): Focal length in y direction.
-            cx (float): Optical center in x direction.
-            cy (float): Optical center in y direction.
-            width (int): Width of the image.
-            height (int): Height of the image.
+    def __init__(self,
+                 fx: float = 525.0,
+                 fy: float = 525.0,
+                 cx: float = 319.5,
+                 cy: float = 239.5,
+                 width: int = 640,
+                 height: int = 480) -> None:
         """
-        self.intrinsics = o3d.camera.PinholeCameraIntrinsic(width, height, fx,
-                                                            fy, cx, cy)
+        Initializes the processor with pinhole camera intrinsics.
 
-    def create_point_cloud(self, rgb_img: np.ndarray, depth_map: np.ndarray,
-                           depth_scale=1000.0, depth_trunc=4.0):
+        :param: fx (float): Focal length along the X-axis.
+        :param: fy (float): Focal length along the Y-axis.
+        :param: cx (float): Principal point X-coordinate.
+        :param: cy (float): Principal point Y-coordinate.
+        :param: width (int): Image width.
+        :param: height (int): Image height.
         """
-        Creates a point cloud from RGB and depth images.
+        self._intrinsics = o3d.camera.PinholeCameraIntrinsic(
+            width, height, fx, fy, cx, cy
+        )
 
-        Args:
-            rgb_img (np.ndarray): The input RGB image as a NumPy array.
-            depth_map (np.ndarray): The input depth map as a NumPy array.
-            depth_scale (float): Scale factor for depth values.
-            depth_trunc (float): Truncation distance for depth values.
-
-        Returns:
-            o3d.geometry.PointCloud: The generated point cloud.
+    def create_point_cloud(
+        self,
+        rgb_image: np.ndarray,
+        depth_map: np.ndarray,
+        depth_scale: float = 1000.0,
+        depth_trunc: float = 4.0
+    ) -> o3d.geometry.PointCloud:
         """
-        rgb_o3d = o3d.geometry.Image(rgb_img)
-        depth_o3d = o3d.geometry.Image(
-            (depth_map * depth_scale).astype(np.uint16))
+        Creates a point cloud from RGB and depth input images.
+
+        :param: rgb_image (np.ndarray): RGB image (H x W x 3).
+        :param: depth_map (np.ndarray): Depth map (H x W) in meters.
+        :param: depth_scale (float): Factor to scale depth values.
+        :param: depth_trunc (float): Maximum depth range to keep.
+
+        :return: o3d.geometry.PointCloud: Output point cloud.
+        """
+        rgb_o3d = o3d.geometry.Image(rgb_image)
+        depth_scaled = (depth_map * depth_scale).astype(np.uint16)
+        depth_o3d = o3d.geometry.Image(depth_scaled)
+
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
-            rgb_o3d, depth_o3d, depth_scale, depth_trunc,
-            convert_rgb_to_intensity=False)
-        return o3d.geometry.PointCloud.create_from_rgbd_image(rgbd,
-                                                              self.intrinsics)
+            rgb_o3d,
+            depth_o3d,
+            depth_scale=depth_scale,
+            depth_trunc=depth_trunc,
+            convert_rgb_to_intensity=False
+        )
 
-    def filter_point_cloud(self, pcd: o3d.geometry.PointCloud,
-                           voxel_size=0.01) -> o3d.geometry.PointCloud:
+        return o3d.geometry.PointCloud.create_from_rgbd_image(
+            rgbd, self._intrinsics
+        )
+
+    def filter_point_cloud(
+        self,
+        pcd: o3d.geometry.PointCloud,
+        voxel_size: float = 0.01,
+        nb_neighbors: int = 20,
+        std_ratio: float = 2.0
+    ) -> o3d.geometry.PointCloud:
         """
-        Filters the point cloud using voxel downsampling and statistical
-        outlier removal.
+        Applies voxel downsampling and statistical outlier removal.
 
-        Args:
-            pcd (o3d.geometry.PointCloud): The input point cloud.
-            voxel_size (float): Size of the voxel for downsampling.
+        :param: pcd (o3d.geometry.PointCloud): Input point cloud.
+        :param: voxel_size (float): Voxel size for downsampling.
+        :param: nb_neighbors (int): Number of neighbors for filtering.
+        :param: std_ratio (float): Threshold for statistical outliers.
 
-        Returns:
-            o3d.geometry.PointCloud: The filtered point cloud.
+        :return: o3d.geometry.PointCloud: Filtered point cloud.
         """
-        pcd = pcd.voxel_down_sample(voxel_size)
-        pcd, _ = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=2.0)
-        return pcd
+        downsampled = pcd.voxel_down_sample(voxel_size)
+        filtered, _ = downsampled.remove_statistical_outlier(
+            nb_neighbors=nb_neighbors,
+            std_ratio=std_ratio
+        )
+        return filtered
