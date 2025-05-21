@@ -1,9 +1,18 @@
-# SIBGRAPI2025
+# SIBGRAPI2025_SLAM
 
-\subsection{Nuvem de Pontos 3D}
+## Description
 
-A partir da imagem RGB e do mapa de profundidade inferido pelo modelo, aplicamos a técnica de \textit{back-projection} para gerar uma nuvem de pontos 3D. Utilizamos a biblioteca Open3D, empregando uma matriz intrínseca do tipo pinhole para transformar as coordenadas de pixel em coordenadas espaciais reais.
+## Steps of isntall
 
-O mapa de profundidade foi convertido para um formato compatível com a Open3D, usando escala métrica e truncamento de profundidade para remover valores extremos. Em seguida, aplicamos filtros de downsampling voxelizado e remoção estatística de outliers para melhorar a densidade e a consistência da nuvem gerada.
+1. Baixar pytorch: Ver a versão e o link direto no site
+    1. pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
+2. Clonar e instalar Depth-Anythingv2
+    1. git clone https://github.com/DepthAnything/Depth-Anything-V2
+    2. cd Depth-Anything-V2
+    3. pip install -r requirements.txt
+3. pip install open3d
+4. 
 
-A Figura~\ref{fig:pointcloud} apresenta a visualização da nuvem resultante no ambiente real capturado.
+## Details
+1. Analisar o desempenho por: watch -n 2 nvidia-smi --id=0
+2. 
