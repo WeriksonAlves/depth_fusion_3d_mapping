@@ -82,16 +82,20 @@ class DepthPointCloudApp:
         )
 
         display = cv2.hconcat([cv2.flip(frame, 0), cv2.flip(depth_colored, 0)])
-
-        if self.save_output and name:
-            out_path = os.path.join(self.output_dir, f'depth_{name}')
-            cv2.imwrite(out_path, display)
-
         cv2.imshow('RGB + Depth Map', display)
 
         pcd = self.processor.create_point_cloud(frame, depth)
         pcd_filtered = self.processor.filter_point_cloud(pcd)
         self.visualizer.update(pcd_filtered)
+
+        if self.save_output and name:
+            out_path_1 = os.path.join(self.output_dir, f'rgb{name}')
+            cv2.imwrite(out_path_1, frame)
+            out_path_2 = os.path.join(self.output_dir, f'depth_{name}')
+            cv2.imwrite(out_path_2, depth_colored)
+            out_path_3 = os.path.join(self.output_dir, f'pcd_{name}.ply')
+            self.processor.save_point_cloud(pcd, out_path_3)
+            print(f"[Info] Saved: {out_path_1}, {out_path_2}, {out_path_3}")
 
     def _run_image_directory_mode(self) -> None:
         """
@@ -160,10 +164,10 @@ class DepthPointCloudApp:
 
 if __name__ == '__main__':
     app = DepthPointCloudApp(
-        mode='webcam',
+        mode='images',
         image_dir='datasets/rgbd_dataset_freiburg1_xyz/rgb',
-        output_dir='results/depth_maps/test_run',
-        save_output=False,
-        camera_idx=0
+        output_dir='results/rgb_depth_22052025_1548/',
+        save_output=True,
+        # camera_idx=0
     )
     app.run()

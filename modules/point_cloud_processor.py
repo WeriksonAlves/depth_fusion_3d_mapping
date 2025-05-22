@@ -83,7 +83,6 @@ class PointCloudProcessor:
         :param: voxel_size (float): Voxel size for downsampling.
         :param: nb_neighbors (int): Number of neighbors for filtering.
         :param: std_ratio (float): Threshold for statistical outliers.
-
         :return: o3d.geometry.PointCloud: Filtered point cloud.
         """
         downsampled = pcd.voxel_down_sample(voxel_size)
@@ -92,3 +91,14 @@ class PointCloudProcessor:
             std_ratio=std_ratio
         )
         return filtered
+
+    def save_point_cloud(self,
+                         pcd: o3d.geometry.PointCloud,
+                         filename: str = "output_map.pcd") -> None:
+        """
+        Saves the point cloud to a file.
+
+        :param: pcd (o3d.geometry.PointCloud): Input point cloud.
+        :param: filename (str): Filename to save the point cloud.
+        """
+        o3d.io.write_point_cloud(filename, pcd)
