@@ -43,12 +43,14 @@ cd SIBGRAPI2025_slam
 git clone https://github.com/DepthAnything/Depth-Anything-V2
 ```
 
+**Atenção:** Renomear a pasta `Depth-Anything-V2` para `Depth_Anything_V2`.
+
 ### 4. Criar ambiente virtual Python
 
 ```bash
-cd ~/octomap_ws/src/SIBGRAPI2025_slam
-python3 -m venv slam_env
-source slam_env/bin/activate
+cd ~/octomap_ws/
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 ### 5. Instalar dependências Python
@@ -56,9 +58,9 @@ source slam_env/bin/activate
 ```bash
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118  # ou cu121/cu128 conforme sua GPU
-pip install open3d opencv-python numpy "numpy<2" pandas
-cd Depth-Anything-V2
+cd src/SIBGRAPI2025_slam/Depth_Anything_V2
 pip install -r requirements.txt
+pip install open3d opencv-python numpy "numpy<2" pandas
 ```
 
 ---
@@ -75,16 +77,17 @@ ros2 pkg create --build-type ament_python o3d_publisher --dependencies rclpy sen
 Edite `setup.py` do pacote com os blocos `data_files` e `entry_points`:
 
 ```python
-data_files=[
-    ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
-    ('share/' + package_name, ['package.xml']),
-    ('share/' + package_name + '/launch', ['launch/octomap_launch.py']),
-],
-entry_points={
-    'console_scripts': [
-        'o3d_pub_node = o3d_publisher.o3d_pub_node:main',
+    data_files=[
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch', ['launch/octomap_launch.py']),
     ],
-},
+
+    entry_points={
+        'console_scripts': [
+            'o3d_pub_node = o3d_publisher.o3d_pub_node:main',
+        ],
+    },
 ```
 
 ### 7. Criar o script `o3d_pub_node.py`
@@ -152,7 +155,7 @@ class O3DPublisher(Node):
 
     def timer_callback(self):
         try:
-            pcd = o3d.io.read_point_cloud("/home/werikson/octomap_ws/src/slam_env/SIBGRAPI2025_slam/point_clouds/pcd.ply") # Mude para o caminho dos seus dados
+            pcd = o3d.io.read_point_cloud("/home/werikson/octomap_ws/src/SIBGRAPI2025_slam/point_clouds/pcd.ply") # Mude para o caminho dos seus dados
             stamp = self.get_clock().now().to_msg()
             msg = convert_cloud_to_ros_msg(pcd, stamp)
             self.publisher_.publish(msg)
@@ -211,24 +214,20 @@ def generate_launch_description():
 cd ~/octomap_ws
 colcon build --packages-select o3d_publisher
 source install/setup.bash
-source ~/octomap_ws/src/SIBGRAPI2025_slam/slam_env/bin/activate
+source ~/octomap_ws/.venv/bin/activate
 ```
 
 ---
 
 ## 🧪 Execução do Sistema
 
-### Monitorar GPU:
-
-```bash
-watch -n 1 nvidia-smi --id=0
-```
-
 ### 1. Gerar e salvar nuvem de pontos:
 
 > Execute o script main.py ou copie uma nuvem de pontos .ply para a pasta `/home/werikson/octomap_ws/src/SIBGRAPI2025_slam/point_clouds`. Em seguida, mude o nome do arquivo para `pcd.ply`.
 
 ```bash
+cd ~/octomap_ws
+source ~/octomap_ws/.venv/bin/activate
 python3 main.py  # ou outro script de geração
 ```
 
@@ -252,6 +251,12 @@ rviz2
 
 - **Fix Frame:** `map`
 - **Add:** `/occupied_cells_vis_array` (`MarkerArray`)
+
+### Monitorar GPU:
+
+```bash
+watch -n 1 nvidia-smi --id=0
+```
 
 ---
 
