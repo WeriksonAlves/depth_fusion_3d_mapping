@@ -23,6 +23,7 @@ class DepthPointCloudApp:
     """
 
     def __init__(self,
+                 current_dir: str,
                  mode: str = 'images',
                  image_dir: Optional[str] = None,
                  output_dir: Optional[str] = None,
@@ -31,6 +32,7 @@ class DepthPointCloudApp:
         """
         Initializes the application.
 
+        :param: current_dir (str): The current working directory of the script.
         :param: mode (str): Operation mode: 'images' or 'webcam'.
         :param: image_dir (str, optional): Directory containing images for
             batch processing. Required if mode is 'images'.
@@ -43,9 +45,10 @@ class DepthPointCloudApp:
             image_dir is not specified in 'images' mode, or if output_dir is
             not specified when save_output is True.
         """
+        self.current_dir = current_dir
         self.mode = mode
-        self.image_dir = image_dir
-        self.output_dir = output_dir
+        self.image_dir = os.path.join(self.current_dir, image_dir)
+        self.output_dir = os.path.join(self.current_dir, output_dir)
         self.save_output = save_output
         self.camera_idx = camera_idx
 
@@ -57,7 +60,8 @@ class DepthPointCloudApp:
             raise ValueError(
                 "output_dir must be specified if save_output is True.")
 
-        self.estimator = DepthEstimator()
+        self.estimator = DepthEstimator(checkpoint_dir=os.path.join(
+            self.current_dir, 'checkpoints'))
         self.processor = PointCloudProcessor()
         self.visualizer = LivePointCloudVisualizer()
 
@@ -165,9 +169,10 @@ class DepthPointCloudApp:
 if __name__ == '__main__':
     app = DepthPointCloudApp(
         mode='images',
+        current_dir=os.path.dirname(os.path.abspath(__file__)),
         image_dir='datasets/rgbd_dataset_freiburg1_xyz/rgb',
         output_dir='results/rgb_depth_22052025_1548/',
-        save_output=True,
+        save_output=False,
         # camera_idx=0
     )
     app.run()
