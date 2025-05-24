@@ -171,8 +171,8 @@ if __name__ == '__main__':
         mode='images',
         current_dir=os.path.dirname(os.path.abspath(__file__)),
         image_dir='datasets/rgbd_dataset_freiburg1_xyz/rgb',
-        output_dir='results/rgb_depth_22052025_1548/',
-        save_output=False,
+        output_dir='results/test/',
+        save_output=True,
         # camera_idx=0
     )
     app.run()
