@@ -146,7 +146,7 @@ class O3DPublisher(Node):
 
     def timer_callback(self):
         try:
-            pcd = o3d.io.read_point_cloud("/octomap_ws/points/pcd.ply") # Mude para o caminho dos seus dados
+            pcd = o3d.io.read_point_cloud("/home/werikson/octomap_ws/src/slam_env/SIBGRAPI2025_slam/point_clouds/pcd.ply") # Mude para o caminho dos seus dados
             stamp = self.get_clock().now().to_msg()
             msg = convert_cloud_to_ros_msg(pcd, stamp)
             self.publisher_.publish(msg)
@@ -219,13 +219,13 @@ source install/setup.bash
 
 1. Clone do Repositorio principal
 ```bash
-mkdir -p ~/octomap_ws/src/slam_env
+mkdir -p ~/octomap_ws/src/
 git clone https://github.com/WeriksonAlves/SIBGRAPI2025_slam.git
 ```
 
 2. Clonar o repositorios auxiliares:
 ```bash
-cd ~/octomap_ws/src/slam_env
+cd ~/octomap_ws/src/SIBGRAPI2025_slam
 git clone https://github.com/DepthAnything/Depth-Anything-V2
 ```
 
@@ -305,6 +305,12 @@ pip list
 
 ### 9. Execução
 
+#### Analise do desempenho da GPU (De 1 em 1 segundos)
+
+```bash
+watch -n 1 nvidia-smi --id=0
+```
+
 #### Publicador da nuvem:
 
 ```bash
@@ -332,41 +338,3 @@ rviz2
 Com os tópicos corretamente conectados e os dados da nuvem em formato esperado, o `octomap_server` constrói dinamicamente o mapa 3D do ambiente, que pode ser visualizado em tempo real no RViz.
 
 ---
-
-## 📍 Considerações finais
-
-Esse setup serve como base para uma pipeline completa de reconstrução de ambientes 3D com uma câmera RGB. Etapas futuras podem incluir integração com VIO/SLAM, movimentação do robô e exportação do mapa final.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Description
-
-## Steps of isntall
-
-1. Baixar pytorch: Ver a versão e o link direto no site
-    1. pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128
-2. Clonar e instalar Depth-Anythingv2
-    1. git clone https://github.com/DepthAnything/Depth-Anything-V2
-    2. cd Depth-Anything-V2
-    3. pip install -r requirements.txt
-3. pip install open3d
-4. 
-
-## Details
-1. Analisar o desempenho por: watch -n 2 nvidia-smi --id=0
-2. 
