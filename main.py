@@ -168,11 +168,11 @@ class DepthPointCloudApp:
 
 if __name__ == '__main__':
     app = DepthPointCloudApp(
-        mode='images',
+        mode='webcam',
         current_dir=os.path.dirname(os.path.abspath(__file__)),
         image_dir='datasets/rgbd_dataset_freiburg1_xyz/rgb',
         output_dir='results/test/',
-        save_output=True,
-        # camera_idx=0
+        save_output=False,
+        camera_idx=0
     )
     app.run()
