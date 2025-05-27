@@ -228,8 +228,8 @@ def main() -> None:
     """
     Main function to launch either the ROS node or local visualization app.
     """
-    ros_mode = True
-    use_webcam = True
+    ros_mode = False
+    use_webcam = False
     image_dir = 'datasets/rgbd_dataset_freiburg1_xyz/rgb'
 
     if ros_mode:

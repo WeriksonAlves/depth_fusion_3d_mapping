@@ -11,7 +11,6 @@ from typing import Optional
 
 import cv2
 import numpy as np
-import torch
 
 from modules.depth_estimator import DepthAnythingV2Estimator
 
@@ -41,7 +40,8 @@ def run_static_test(estimator: DepthAnythingV2Estimator) -> None:
     Args:
         estimator (DepthAnythingV2Estimator): Inference engine.
     """
-    image_path = 'datasets/rgbd_dataset_freiburg1_xyz/rgb/1305031102.175304.png'
+    directory = 'datasets/rgbd_dataset_freiburg1_xyz/rgb'
+    image_path = f'{directory}/1305031102.175304.png'
     rgb = cv2.imread(image_path)
     if rgb is None:
         raise FileNotFoundError(f"Failed to load image: {image_path}")
@@ -161,4 +161,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    run_static_test()
