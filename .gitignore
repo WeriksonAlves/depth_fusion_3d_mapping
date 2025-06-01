@@ -1,3 +1,5 @@
 Depth_Anything_V2
 slam_env
 *.pyc
+datasets/lab_scene_kinect_xyz/reconstruction_depthanything_aligned.ply
+datasets/lab_scene_kinect_xyz/reconstruction_depthanything.ply

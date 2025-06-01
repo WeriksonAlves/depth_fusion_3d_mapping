@@ -54,6 +54,7 @@ Você pode interromper com `Ctrl+C` após os \~10 segundos.
 
 ---
 
+
 ## 🗂️ **4. Estrutura de Pastas Recomendada**
 
 ```bash
