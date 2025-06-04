@@ -24,10 +24,10 @@ def main():
     reconstructor = MultiwayReconstructor(
         dataset_dir=dataset_path,
         output_dir=output_path,
-        mode="real",  # real or mono"
+        mode="mono",  # real or mono"
         ros_node=None,
         voxel_size=0.02,
-        depth_scale=5000.0,
+        depth_scale=850.0,
         depth_trunc=4.0,
         frame_id="map",
         topic="/o3d_points"

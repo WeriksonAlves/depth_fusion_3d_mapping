@@ -1,1 +1,114 @@
+# Duvidas em realção a s1_infer_mono_depth.py
+
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s1_infer_mono_depth.py
+xFormers not available
+xFormers not available
+[INFO] Running monocular depth inference...
+[INFO] Inference device: cuda
+[INFO] Output directory: results/lab_scene_03
+Estimating depth: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 20/20 [00:02<00:00,  7.33it/s]
+[✓] Depth inference complete.
+
 Q1: Devo estimar o rgb ou o depth? Analise por meio do png de ambos.
+
+---
+
+# Duvidas em relação a s2_run_multiway_reconstruction.py
+
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'real' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_sensor.ply
+[INFO] Total points: 213786
+[INFO] Bounding box volume: 34.3647 m³
+[✓] Reconstruction complete.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'mono' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_depthanything.ply
+[INFO] Total points: 249088
+[INFO] Bounding box volume: 39.9748 m³
+[✓] Reconstruction complete.
+
+**I1: Informações da reconstrução pelo RGB com depth_scale = 1000**
+
+---
+
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'real' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_sensor.ply
+[INFO] Total points: 39110
+[INFO] Bounding box volume: 9.2231 m³
+[✓] Reconstruction complete.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'mono' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_depthanything.ply
+[INFO] Total points: 249088
+[INFO] Bounding box volume: 39.9748 m³
+[✓] Reconstruction complete.
+
+**I2: Informações da reconstrução pelo RGB com depth_scale = 500**
+
+---
+
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'real' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_sensor.ply
+[INFO] Total points: 61938
+[INFO] Bounding box volume: 2.4705 m³
+[✓] Reconstruction complete.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'mono' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_depthanything.ply
+[INFO] Total points: 249088
+[INFO] Bounding box volume: 39.9748 m³
+[✓] Reconstruction complete.
+
+**I3: Informações da reconstrução pelo RGB com depth_scale = 5000**
+
+---
+
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'real' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_sensor.ply
+[INFO] Total points: 149469
+[INFO] Bounding box volume: 35.5320 m³
+[✓] Reconstruction complete.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
+xFormers not available
+xFormers not available
+[INFO] Running multiway reconstruction...
+[INFO] Starting reconstruction in 'mono' mode...
+[✓] Merged map saved to: results/lab_scene_03/reconstruction_depthanything.ply
+[INFO] Total points: 249088
+[INFO] Bounding box volume: 39.9748 m³
+[✓] Reconstruction complete.
+
+**I3: Informações da reconstrução pelo RGB com depth_scale = 850** # Está sendo usado este valor.
+
+---
+
+R1: Atualizar o metodo de otimização para igual o do exemplo: "modules/reconstruction/graph_optimizer.py"
+
+---
+
+# Duvidas em relação a 

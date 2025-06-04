@@ -35,7 +35,7 @@ class FrameLoader:
             depth_dir (Path): Path to depth maps (.png or .npy).
             intrinsics (o3d.camera.PinholeCameraIntrinsic): Camera intrinsics.
             mode (str): 'real' for .png depths or 'mono' for .npy (in meters).
-            depth_scale (float): Scaling factor to convert depth to mm.
+            depth_scale (float): Scaling factor to convert depth to meters.
             depth_trunc (float): Max depth value to accept in meters.
             voxel_size (float): Downsampling voxel size.
         """
@@ -88,17 +88,22 @@ class FrameLoader:
         rgb = o3d.io.read_image(str(rgb_path))
 
         if self.mode == "real":
-            depth = o3d.io.read_image(str(depth_path))
+            # Depth is in uint16 (millimeters), convert to meters
+            raw_depth = np.asarray(
+                o3d.io.read_image(str(depth_path))
+            ).astype(np.float32)
+            raw_depth /= self.depth_scale
         else:
+            # Monocular depth already in float32 meters
             raw_depth = np.load(depth_path).astype(np.float32)
-            depth = o3d.geometry.Image(
-                (raw_depth * self.depth_scale).astype(np.uint16)
-            )
+
+        # Create Open3D Image in meters
+        depth = o3d.geometry.Image(raw_depth)
 
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
             rgb,
             depth,
-            depth_scale=self.depth_scale,
+            depth_scale=1.0,  # Already in meters
             depth_trunc=self.depth_trunc,
             convert_rgb_to_intensity=False
         )
