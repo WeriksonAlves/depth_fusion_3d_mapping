@@ -26,7 +26,7 @@ class DepthBatchInferencer:
     def __init__(
         self,
         input_dir: Path,
-        output_dir: Path,
+        output_path: Path,
         encoder: str = 'vits',
         checkpoint_dir: Path = Path('checkpoints'),
         device: Optional[str] = None
@@ -42,7 +42,8 @@ class DepthBatchInferencer:
             device (Optional[str]): Inference device ('cuda' or 'cpu').
         """
         self.input_dir = input_dir
-        self.output_dir = output_dir
+        self.output_mono_dir = output_path / "depth_mono"
+        self.output_png_dir = output_path / "depth_png"
         self.device = device or (
             'cuda' if torch.cuda.is_available() else 'cpu'
         )
@@ -53,9 +54,10 @@ class DepthBatchInferencer:
             device=self.device
         )
 
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.output_mono_dir.mkdir(parents=True, exist_ok=True)
+        self.output_png_dir.mkdir(parents=True, exist_ok=True)
         print(f"[INFO] Inference device: {self.device}")
-        print(f"[INFO] Output directory: {self.output_dir}")
+        print(f"[INFO] Output directory: {output_path}")
 
     def _load_images(self) -> List[Path]:
         """
@@ -87,8 +89,14 @@ class DepthBatchInferencer:
         if isinstance(depth, torch.Tensor):
             depth = depth.cpu().numpy()
 
-        out_file = self.output_dir / img_path.with_suffix('.npy').name
-        np.save(out_file, depth)
+        # Save depth map as .npy file
+        out_npy_file = self.output_mono_dir / img_path.with_suffix('.npy').name
+        np.save(out_npy_file, depth)
+
+        # Save depth map as .png for visualization
+        out_png_file = self.output_png_dir / img_path.with_suffix('.png').name
+        depth_scaled = (depth * 255 / np.max(depth)).astype(np.uint8)
+        cv2.imwrite(str(out_png_file), depth_scaled)
 
     def run(self) -> None:
         """
