@@ -1,40 +1,62 @@
 """
-Module for processing 3D point clouds from RGB and depth images
-using Open3D. It provides utilities for creating and filtering
-point clouds using voxel downsampling and statistical filtering.
+Point cloud processing module for RGB-D inputs using Open3D and ROS 2.
+
+Provides methods to generate, filter, save, and publish point clouds
+derived from RGB and depth images.
 """
 
+import struct
+from typing import Optional
 
 import numpy as np
 import open3d as o3d
+from rclpy.node import Node
+from sensor_msgs.msg import PointCloud2, PointField
+from std_msgs.msg import Header
 
 
 class PointCloudProcessor:
     """
-    Handles creation and filtering of point clouds from RGB and
-    depth image inputs.
+    Handles 3D point cloud creation, filtering, and publishing to ROS 2.
     """
 
-    def __init__(self,
-                 fx: float = 525.0,
-                 fy: float = 525.0,
-                 cx: float = 319.5,
-                 cy: float = 239.5,
-                 width: int = 640,
-                 height: int = 480) -> None:
+    def __init__(
+        self,
+        fx: float = 525.0,
+        fy: float = 525.0,
+        cx: float = 319.5,
+        cy: float = 239.5,
+        width: int = 640,
+        height: int = 480,
+        ros_node: Optional[Node] = None,
+        frame_id: str = "map",
+        topic: str = "/o3d_points"
+    ) -> None:
         """
-        Initializes the processor with pinhole camera intrinsics.
+        Initializes camera intrinsics and ROS publisher if a node is provided.
 
-        :param: fx (float): Focal length along the X-axis.
-        :param: fy (float): Focal length along the Y-axis.
-        :param: cx (float): Principal point X-coordinate.
-        :param: cy (float): Principal point Y-coordinate.
-        :param: width (int): Image width.
-        :param: height (int): Image height.
+        Args:
+            fx (float): Focal length along the x-axis.
+            fy (float): Focal length along the y-axis.
+            cx (float): Principal point x-coordinate.
+            cy (float): Principal point y-coordinate.
+            width (int): Image width in pixels.
+            height (int): Image height in pixels.
+            ros_node (Node, optional): ROS 2 node used to create the publisher.
+            frame_id (str): Frame of reference for the published point cloud.
+            topic (str): ROS 2 topic to publish point clouds on.
         """
         self._intrinsics = o3d.camera.PinholeCameraIntrinsic(
             width, height, fx, fy, cx, cy
         )
+        self._ros_node = ros_node
+        self._frame_id = frame_id
+        self._publisher = None
+
+        if ros_node is not None:
+            self._publisher = ros_node.create_publisher(
+                PointCloud2, topic, 10
+            )
 
     def create_point_cloud(
         self,
@@ -44,22 +66,24 @@ class PointCloudProcessor:
         depth_trunc: float = 4.0
     ) -> o3d.geometry.PointCloud:
         """
-        Creates a point cloud from RGB and depth input images.
+        Creates a 3D point cloud from aligned RGB and depth images.
 
-        :param: rgb_image (np.ndarray): RGB image (H x W x 3).
-        :param: depth_map (np.ndarray): Depth map (H x W) in meters.
-        :param: depth_scale (float): Factor to scale depth values.
-        :param: depth_trunc (float): Maximum depth range to keep.
+        Args:
+            rgb_image (np.ndarray): Input RGB image of shape (H, W, 3).
+            depth_map (np.ndarray): Depth image in meters of shape (H, W).
+            depth_scale (float): Depth scale to convert meters to millimeters.
+            depth_trunc (float): Maximum depth threshold.
 
-        :return: o3d.geometry.PointCloud: Output point cloud.
+        Returns:
+            o3d.geometry.PointCloud: Generated point cloud.
         """
-        rgb_o3d = o3d.geometry.Image(rgb_image)
+        rgb = o3d.geometry.Image(rgb_image)
         depth_scaled = (depth_map * depth_scale).astype(np.uint16)
-        depth_o3d = o3d.geometry.Image(depth_scaled)
+        depth = o3d.geometry.Image(depth_scaled)
 
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
-            rgb_o3d,
-            depth_o3d,
+            rgb,
+            depth,
             depth_scale=depth_scale,
             depth_trunc=depth_trunc,
             convert_rgb_to_intensity=False
@@ -71,7 +95,7 @@ class PointCloudProcessor:
 
     def filter_point_cloud(
         self,
-        pcd: o3d.geometry.PointCloud,
+        cloud: o3d.geometry.PointCloud,
         voxel_size: float = 0.01,
         nb_neighbors: int = 20,
         std_ratio: float = 2.0
@@ -79,26 +103,103 @@ class PointCloudProcessor:
         """
         Applies voxel downsampling and statistical outlier removal.
 
-        :param: pcd (o3d.geometry.PointCloud): Input point cloud.
-        :param: voxel_size (float): Voxel size for downsampling.
-        :param: nb_neighbors (int): Number of neighbors for filtering.
-        :param: std_ratio (float): Threshold for statistical outliers.
-        :return: o3d.geometry.PointCloud: Filtered point cloud.
+        Args:
+            cloud (o3d.geometry.PointCloud): Input point cloud.
+            voxel_size (float): Size of the voxel grid.
+            nb_neighbors (int): Number of neighbors to analyze per point.
+            std_ratio (float): Threshold for outlier removal.
+
+        Returns:
+            o3d.geometry.PointCloud: Filtered point cloud.
         """
-        downsampled = pcd.voxel_down_sample(voxel_size)
+        downsampled = cloud.voxel_down_sample(voxel_size)
         filtered, _ = downsampled.remove_statistical_outlier(
             nb_neighbors=nb_neighbors,
             std_ratio=std_ratio
         )
         return filtered
 
-    def save_point_cloud(self,
-                         pcd: o3d.geometry.PointCloud,
-                         filename: str = "output_map.pcd") -> None:
+    def save_point_cloud(
+        self,
+        cloud: o3d.geometry.PointCloud,
+        filename: str = "output_map.pcd"
+    ) -> None:
         """
-        Saves the point cloud to a file.
+        Saves a point cloud to a file in PCD format.
 
-        :param: pcd (o3d.geometry.PointCloud): Input point cloud.
-        :param: filename (str): Filename to save the point cloud.
+        Args:
+            cloud (o3d.geometry.PointCloud): Point cloud to save.
+            filename (str): Destination filename.
         """
-        o3d.io.write_point_cloud(filename, pcd)
+        o3d.io.write_point_cloud(filename, cloud)
+
+    def publish_point_cloud(
+        self,
+        cloud: o3d.geometry.PointCloud
+    ) -> None:
+        """
+        Publishes a point cloud to the configured ROS 2 topic.
+
+        Args:
+            cloud (o3d.geometry.PointCloud): Point cloud to publish.
+
+        Raises:
+            RuntimeError: If publisher is not initialized.
+        """
+        if self._publisher is None:
+            raise RuntimeError("ROS 2 publisher not initialized.")
+
+        msg = self._convert_to_ros_msg(cloud)
+        self._publisher.publish(msg)
+        self._ros_node.get_logger().info("Point cloud published.")
+
+    def _convert_to_ros_msg(
+        self,
+        cloud: o3d.geometry.PointCloud
+    ) -> PointCloud2:
+        """
+        Converts an Open3D point cloud to a ROS 2 PointCloud2 message.
+
+        Args:
+            cloud (o3d.geometry.PointCloud): Input Open3D point cloud.
+
+        Returns:
+            PointCloud2: ROS 2 formatted point cloud message.
+        """
+        points = np.asarray(cloud.points)
+        colors = np.asarray(cloud.colors)
+
+        if colors.shape[0] != points.shape[0]:
+            colors = np.zeros_like(points)
+
+        data = []
+        for i in range(points.shape[0]):
+            x, y, z = points[i]
+            r, g, b = (colors[i] * 255).astype(np.uint8)
+            rgb = struct.unpack('I', struct.pack('BBBB', b, g, r, 0))[0]
+            data.append([x, y, z, rgb])
+        data_array = np.array(data, dtype=np.float32)
+
+        msg = PointCloud2()
+        msg.header = Header()
+        msg.header.stamp = self._ros_node.get_clock().now().to_msg()
+        msg.header.frame_id = self._frame_id
+        msg.height = 1
+        msg.width = data_array.shape[0]
+        msg.fields = [
+            PointField(name='x', offset=0, datatype=PointField.FLOAT32,
+                       count=1),
+            PointField(name='y', offset=4, datatype=PointField.FLOAT32,
+                       count=1),
+            PointField(name='z', offset=8, datatype=PointField.FLOAT32,
+                       count=1),
+            PointField(name='rgb', offset=12, datatype=PointField.UINT32,
+                       count=1)
+        ]
+        msg.is_bigendian = False
+        msg.point_step = 16
+        msg.row_step = msg.point_step * msg.width
+        msg.is_dense = True
+        msg.data = data_array.tobytes()
+
+        return msg
