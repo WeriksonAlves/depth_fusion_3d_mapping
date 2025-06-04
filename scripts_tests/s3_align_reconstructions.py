@@ -9,12 +9,10 @@ from modules.evaluation.align_reconstruction_node import ReconstructionAligner
 
 
 def main():
-    base_dir = Path("datasets/lab_scene_kinect_xyz")
-    output_dir = Path("results/lab_scene_kinect_xyz")
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = Path("results/lab_scene_03")
 
-    real_pcd_path = base_dir / "reconstruction_d435.ply"
-    mono_pcd_path = base_dir / "reconstruction_depthanything.ply"
+    real_pcd_path = output_dir / "reconstruction_sensor.ply"
+    mono_pcd_path = output_dir / "reconstruction_depthanything.ply"
     output_pcd = output_dir / "reconstruction_depthanything_aligned.ply"
     output_matrix = output_dir / "T_d_to_m.npy"
 
