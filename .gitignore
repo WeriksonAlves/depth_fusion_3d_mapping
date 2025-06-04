@@ -3,3 +3,12 @@ slam_env
 *.pyc
 datasets/lab_scene_kinect_xyz/reconstruction_depthanything_aligned.ply
 datasets/lab_scene_kinect_xyz/reconstruction_depthanything.ply
+
+datasets/lab_scene_02/*.ply
+theoric/roteiro
+*.zip
+*.ply
+*.pcd
+*.bag
+*.npy
+*.pth
