@@ -1,16 +1,21 @@
 """
-Public API for the 'modules' package.
+Top-level namespace for the SIBGRAPI2025_SLAM project modules.
 
-Exposes the main classes used for depth estimation, point cloud processing,
-and live visualization from RGB-D data.
+This package exposes the core submodules:
+- inference: monocular depth estimation
+- reconstruction: 3D mapping and registration
+- evaluation: comparison and alignment tools
+- utils: ROS 2 and Open3D utilities
 """
 
-from modules.depth_estimator import DepthAnythingV2Estimator
-from modules.point_cloud_processor import PointCloudProcessor
-from modules.live_point_cloud_visualizer import LivePointCloudVisualizer
+from modules import inference
+from modules import reconstruction
+from modules import evaluation
+from modules import utils
 
 __all__ = [
-    "DepthAnythingV2Estimator",
-    "PointCloudProcessor",
-    "LivePointCloudVisualizer"
+    "inference",
+    "reconstruction",
+    "evaluation",
+    "utils"
 ]

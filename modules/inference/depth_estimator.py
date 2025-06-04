@@ -1,8 +1,8 @@
 """
 Depth estimation module using the DepthAnythingV2 model.
 
-This class handles model loading, configuration management,
-and depth inference from RGB images.
+This class handles model loading, encoder configuration,
+device management, and RGB-to-depth inference.
 """
 
 import os
@@ -16,8 +16,7 @@ from Depth_Anything_V2.depth_anything_v2.dpt import DepthAnythingV2
 
 class DepthAnythingV2Estimator:
     """
-    A wrapper class for the DepthAnythingV2 model to estimate depth
-    from RGB images using different encoder configurations.
+    Wrapper for the DepthAnythingV2 model to estimate depth from RGB input.
     """
 
     def __init__(
@@ -27,12 +26,12 @@ class DepthAnythingV2Estimator:
         device: Optional[str] = None
     ) -> None:
         """
-        Initializes the estimator with the selected encoder and device.
+        Initializes the model with selected encoder and device.
 
         Args:
             encoder (str): Encoder type ('vits', 'vitb', 'vitl', 'vitg').
-            checkpoint_dir (str): Directory containing model checkpoints.
-            device (Optional[str]): Device to run inference ('cuda' or 'cpu').
+            checkpoint_dir (str): Directory containing model checkpoint.
+            device (Optional[str]): Device to use ('cuda' or 'cpu').
         """
         self.encoder = encoder.lower()
         self.device = device or self._select_device()
@@ -40,47 +39,22 @@ class DepthAnythingV2Estimator:
 
     def _select_device(self) -> str:
         """
-        Automatically selects the best available device.
+        Automatically selects available compute device.
 
         Returns:
-            str: 'cuda' if available, else 'cpu'.
+            str: 'cuda' if GPU is available, otherwise 'cpu'.
         """
         return 'cuda' if torch.cuda.is_available() else 'cpu'
 
-    def _load_model(self, checkpoint_dir: str) -> DepthAnythingV2:
-        """
-        Loads the model from a checkpoint file.
-
-        Args:
-            checkpoint_dir (str): Path to model checkpoints.
-
-        Returns:
-            DepthAnythingV2: Loaded model ready for inference.
-
-        Raises:
-            ValueError: If the encoder type is not supported.
-        """
-        config = self._get_model_config()
-        model = DepthAnythingV2(**config)
-
-        checkpoint_path = os.path.join(
-            checkpoint_dir,
-            f'depth_anything_v2_{self.encoder}.pth'
-        )
-        model.load_state_dict(
-            torch.load(checkpoint_path, map_location=self.device)
-        )
-        return model.to(self.device).eval()
-
     def _get_model_config(self) -> dict:
         """
-        Returns the configuration dictionary for the selected encoder.
+        Returns the encoder-specific configuration.
 
         Returns:
-            dict: Model configuration.
+            dict: Model initialization config.
 
         Raises:
-            ValueError: If encoder is not one of the supported types.
+            ValueError: If encoder is not supported.
         """
         configs = {
             'vits': {
@@ -109,14 +83,37 @@ class DepthAnythingV2Estimator:
             raise ValueError(f"Unsupported encoder: {self.encoder}")
         return configs[self.encoder]
 
-    def infer_depth(self, rgb_image: np.ndarray) -> torch.Tensor:
+    def _load_model(self, checkpoint_dir: str) -> DepthAnythingV2:
         """
-        Performs depth estimation on a given RGB image.
+        Loads the model weights from the checkpoint.
 
         Args:
-            rgb_image (np.ndarray): Input RGB image (H x W x 3).
+            checkpoint_dir (str): Directory where weights are stored.
 
         Returns:
-            torch.Tensor: Estimated depth map.
+            DepthAnythingV2: Model ready for inference.
+        """
+        config = self._get_model_config()
+        model = DepthAnythingV2(**config)
+
+        checkpoint_path = os.path.join(
+            checkpoint_dir,
+            f'depth_anything_v2_{self.encoder}.pth'
+        )
+
+        model.load_state_dict(
+            torch.load(checkpoint_path, map_location=self.device)
+        )
+        return model.to(self.device).eval()
+
+    def infer_depth(self, rgb_image: np.ndarray) -> torch.Tensor:
+        """
+        Estimates depth from an RGB input image.
+
+        Args:
+            rgb_image (np.ndarray): RGB image (shape: H x W x 3).
+
+        Returns:
+            torch.Tensor: Estimated depth map as tensor.
         """
         return self.model.infer_image(rgb_image)
