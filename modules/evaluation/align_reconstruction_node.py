@@ -106,6 +106,31 @@ class ReconstructionAligner:
             height=540
         )
 
+        # Save visualization of real point cloud
+        vis = o3d.visualization.Visualizer()
+        vis.create_window()
+        vis.add_geometry(pcd_real)
+        vis.run()
+        vis.capture_screen_image(str(self.real_path.with_suffix('.png')))
+        print(f"[✓] Visualization saved to: {self.real_path.with_suffix('.png')}")
+
+        # Save visualization of aligned point cloud
+        vis = o3d.visualization.Visualizer()
+        vis.create_window()
+        vis.add_geometry(aligned)
+        vis.run()
+        vis.capture_screen_image(str(self.mono_path.with_suffix('.png')))
+        print(f"[✓] Visualization saved to: {self.mono_path.with_suffix('.png')}")
+
+        # Save visualization both together
+        vis = o3d.visualization.Visualizer()
+        vis.create_window()
+        vis.add_geometry(pcd_real)
+        vis.add_geometry(aligned)
+        vis.run()
+        vis.capture_screen_image(str(self.output_aligned_path.with_suffix('.png')))
+        print(f"[✓] Visualization saved to: {self.output_aligned_path.with_suffix('.png')}")
+
 
 class ReconstructionAlignerNode(Node):
     """
