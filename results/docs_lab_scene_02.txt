@@ -1,0 +1,16 @@
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts/run_multiway_reconstruction_real.py
+xFormers not available
+xFormers not available
+[✓] Merged map saved to: datasets/lab_scene_02/reconstruction_d435.ply
+[INFO] Total points: 604704
+[INFO] Bounding box volume: 60.6186 m³
+[✓] Multiway reconstruction (real depth) completed.
+
+
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts/run_multiway_reconstruction_mono.py
+xFormers not available
+xFormers not available
+[✓] Merged map saved to: datasets/lab_scene_02/reconstruction_depthanything.ply
+[INFO] Total points: 384690
+[INFO] Bounding box volume: 199488496.9423 m³
+[✓] Multiway reconstruction (monocular depth) completed.
