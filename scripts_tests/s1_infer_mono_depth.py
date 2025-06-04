@@ -11,7 +11,6 @@ def main():
     output_path = Path("results/lab_scene_03")
 
     input_dir = dataset_path / "rgb"
-    output_dir = output_path / "depth_mono"
     checkpoint_dir = Path("checkpoints")
     encoder = "vits"
 
@@ -26,7 +25,7 @@ def main():
     print("[INFO] Running monocular depth inference...")
     inferencer = DepthBatchInferencer(
         input_dir=input_dir,
-        output_dir=output_dir,
+        output_path=output_path,
         encoder=encoder,
         checkpoint_dir=checkpoint_dir
     )
