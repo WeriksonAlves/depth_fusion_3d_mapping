@@ -28,6 +28,7 @@ class MultiwayReconstructor:
     def __init__(
         self,
         dataset_dir: Path,
+        output_dir: Path,
         mode: str = "real",
         ros_node: Optional[Node] = None,
         voxel_size: float = 0.02,
@@ -53,12 +54,13 @@ class MultiwayReconstructor:
         self.mode = mode
         self.dataset_dir = dataset_dir
         self.rgb_dir = dataset_dir / "rgb"
-        self.depth_dir = dataset_dir / (
-            "depth" if mode == "real" else "depth_mono"
-        )
+        if mode == "real":
+            self.depth_dir = dataset_dir / "depth"
+        else:
+            self.depth_dir = output_dir / "depth_mono"
 
-        suffix = "d435" if mode == "real" else "depthanything"
-        self.output_path = dataset_dir / f"reconstruction_{suffix}.ply"
+        suffix = "sensor" if mode == "real" else "depthanything"
+        self.output_path = output_dir / f"reconstruction_{suffix}.ply"
         self.intrinsics_path = dataset_dir / "intrinsics.json"
 
         self.voxel_size = voxel_size
