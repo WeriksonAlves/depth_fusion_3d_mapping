@@ -111,14 +111,15 @@ def fuse_maps_conditional(
 
 
 def main():
-    base = Path("datasets/lab_scene_kinect_xyz")
+    dataset_dir = Path("datasets/lab_scene_03")
+    output_dir = Path("results/lab_scene_03")
     fuse_maps_conditional(
-        rgb_dir=base / "rgb",
-        depth_real_dir=base / "depth",
-        depth_mono_dir=base / "depth_mono",
-        T_path=Path("results/lab_scene_kinect_xyz/T_d_to_m.npy"),
-        output_dir=base / "depth_fused_refined",
-        intrinsics=load_intrinsics(base / "intrinsics.json")
+        rgb_dir=dataset_dir / "rgb",
+        depth_real_dir=dataset_dir / "depth",
+        depth_mono_dir=output_dir / "depth_mono",
+        T_path=output_dir / "T_d_to_m.npy",
+        output_dir=output_dir / "depth_fused_refined",
+        intrinsics=load_intrinsics(dataset_dir / "intrinsics.json")
     )
 
 
