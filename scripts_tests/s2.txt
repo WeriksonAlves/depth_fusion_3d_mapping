@@ -1,18 +1,3 @@
-# Duvidas em realção a s1_infer_mono_depth.py
-
-(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s1_infer_mono_depth.py
-xFormers not available
-xFormers not available
-[INFO] Running monocular depth inference...
-[INFO] Inference device: cuda
-[INFO] Output directory: results/lab_scene_03
-Estimating depth: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 20/20 [00:02<00:00,  7.33it/s]
-[✓] Depth inference complete.
-
-Q1: Devo estimar o rgb ou o depth? Analise por meio do png de ambos.
-
----
-
 # Duvidas em relação a s2_run_multiway_reconstruction.py
 
 (.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s2_run_multiway_reconstruction.py
@@ -110,5 +95,3 @@ xFormers not available
 R1: Atualizar o metodo de otimização para igual o do exemplo: "modules/reconstruction/graph_optimizer.py"
 
 ---
-
-# Duvidas em relação a 
