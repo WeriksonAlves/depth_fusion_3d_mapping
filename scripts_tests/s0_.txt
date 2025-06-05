@@ -1,0 +1,28 @@
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s0_record_sensor.py
+xFormers not available
+xFormers not available
+INFO:root:[INFO] Starting RealSense pipeline...
+INFO:root:[✓] Intrinsics saved to: datasets/lab_scene_r/intrinsics.json
+INFO:root:[INFO] Starting frame capture...
+INFO:root:[✓] Capture finished: 60 frames saved.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s0_record_sensor.py
+xFormers not available
+xFormers not available
+INFO:root:[INFO] Starting RealSense pipeline...
+INFO:root:[✓] Intrinsics saved to: datasets/lab_scene_f/intrinsics.json
+INFO:root:[INFO] Starting frame capture...
+INFO:root:[✓] Capture finished: 60 frames saved.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s0_record_sensor.py
+xFormers not available
+xFormers not available
+INFO:root:[INFO] Starting RealSense pipeline...
+INFO:root:[✓] Intrinsics saved to: datasets/lab_scene_l/intrinsics.json
+INFO:root:[INFO] Starting frame capture...
+INFO:root:[✓] Capture finished: 60 frames saved.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/scripts_tests/s0_record_sensor.py
+xFormers not available
+xFormers not available
+INFO:root:[INFO] Starting RealSense pipeline...
+INFO:root:[✓] Intrinsics saved to: datasets/lab_scene_d/intrinsics.json
+INFO:root:[INFO] Starting frame capture...
+INFO:root:[✓] Capture finished: 60 frames saved.

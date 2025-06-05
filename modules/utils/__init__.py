@@ -15,7 +15,7 @@ from modules.utils.live_point_cloud_visualizer_node import (
     LivePointCloudVisualizer,
     VisualizePointCloudNode
 )
-from modules.utils.realsense_recorder import RealSenseRecorder
+from modules.utils.s0_realsense_recorder import RealSenseRecorder
 
 __all__ = [
     "PointCloudProcessor",
