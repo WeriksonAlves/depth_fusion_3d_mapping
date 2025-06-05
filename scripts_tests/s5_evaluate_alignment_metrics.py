@@ -78,9 +78,11 @@ def print_and_export_metrics(real_pcd, aligned_pcd, output_path):
 
 
 def main():
-    real_path = Path("datasets/lab_scene_kinect_xyz/reconstruction_d435.ply")
-    aligned_path = Path("datasets/lab_scene_kinect_xyz/reconstruction_depthanything_aligned.ply")
-    report_path = Path("results/lab_scene_kinect_xyz/evaluation_report.txt")
+    output_dir = Path("results/lab_scene_03/1000")
+
+    real_path = output_dir / "reconstruction_sensor.ply"
+    aligned_path = output_dir / "reconstruction_depthanything_aligned.ply"
+    report_path = output_dir / "evaluation_report.txt"
 
     print("[INFO] Loading point clouds...")
     real_pcd = o3d.io.read_point_cloud(str(real_path))
