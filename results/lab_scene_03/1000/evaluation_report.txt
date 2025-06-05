@@ -1,0 +1,7 @@
+# Evaluation Report
+RMSE: 0.4403
+Hausdorff Distance: 1.8144
+Points (Real): 206215
+Points (Mono): 231956
+Volume (Real): 34.3647 m³
+Volume (Mono): 38.6774 m³
