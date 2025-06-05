@@ -6,7 +6,7 @@ from modules.utils.realsense_recorder import RealSenseRecorder
 
 def main() -> None:
     recorder = RealSenseRecorder(
-        output_dir="datasets/lab_scene_04",
+        output_dir="datasets/lab_scene",
         max_frames=60,
         fps=30
     )

@@ -89,6 +89,13 @@ class DepthBatchInferencer:
         if isinstance(depth, torch.Tensor):
             depth = depth.cpu().numpy()
 
+        # Show real image and depth image concatenated
+        depth_scaled = (depth * 255 / np.max(depth)).astype(np.uint8)
+        depth_colored = cv2.applyColorMap(depth_scaled, cv2.COLORMAP_JET)
+        combined_image = cv2.hconcat([image, depth_colored])
+        cv2.imshow("Image and Depth Map", combined_image)
+        cv2.waitKey(1)
+
         # Save depth map as .npy file
         out_npy_file = self.output_mono_dir / img_path.with_suffix('.npy').name
         np.save(out_npy_file, depth)
@@ -105,6 +112,7 @@ class DepthBatchInferencer:
         image_paths = self._load_images()
         for img_path in tqdm(image_paths, desc="Estimating depth"):
             self._infer_and_save(img_path)
+        cv2.destroyAllWindows()
 
 
 class DepthBatchInferencerNode(Node):
