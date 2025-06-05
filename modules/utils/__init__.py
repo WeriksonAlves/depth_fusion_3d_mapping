@@ -15,6 +15,7 @@ from modules.utils.live_point_cloud_visualizer_node import (
     LivePointCloudVisualizer,
     VisualizePointCloudNode
 )
+from modules.utils.realsense_recorder import RealSenseRecorder
 
 __all__ = [
     "PointCloudProcessor",
@@ -22,5 +23,6 @@ __all__ = [
     "visualize_open3d",
     "OctomapResolutionTesterNode",
     "LivePointCloudVisualizer",
-    "VisualizePointCloudNode"
+    "VisualizePointCloudNode",
+    "RealSenseRecorder"
 ]
