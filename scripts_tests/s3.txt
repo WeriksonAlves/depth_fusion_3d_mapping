@@ -1,0 +1,5 @@
+Testado a reconstrução de com variações no valor de depth_scale
+
+Testar a alteração de voxel_size, depois
+
+nuvem estimada está espelhada na geração da imagem

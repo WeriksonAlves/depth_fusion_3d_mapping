@@ -9,7 +9,7 @@ from modules.evaluation.align_reconstruction_node import ReconstructionAligner
 
 
 def main():
-    output_dir = Path("results/lab_scene_03")
+    output_dir = Path("results/lab_scene_03/5000")
 
     real_pcd_path = output_dir / "reconstruction_sensor.ply"
     mono_pcd_path = output_dir / "reconstruction_depthanything.ply"
