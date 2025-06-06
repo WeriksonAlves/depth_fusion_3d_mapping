@@ -41,7 +41,8 @@ class RGBDLoader:
         rgb_dir: Path,
         depth_dir: Path,
         intrinsic: o3d.camera.PinholeCameraIntrinsic,
-        voxel_size: float
+        voxel_size: float,
+        scale_correction: float = 1.0
     ) -> List[o3d.geometry.PointCloud]:
         rgb_paths = sorted(rgb_dir.glob("*.png"))
         depth_paths = sorted(depth_dir.glob("*.npy"))
@@ -49,7 +50,7 @@ class RGBDLoader:
         point_clouds = []
         for rgb_path, depth_path in zip(rgb_paths, depth_paths):
             color = o3d.io.read_image(str(rgb_path))
-            depth_np = np.load(depth_path)
+            depth_np = np.load(depth_path) * scale_correction
             depth_mm = (depth_np * 1000.0).astype(np.uint16)
             depth = o3d.geometry.Image(depth_mm)
 
@@ -84,7 +85,8 @@ class MultiwayReconstructorOffline:
         intrinsics_json: Path,
         output_dir: Path,
         output_pcd: Path,
-        voxel_size: float = 0.02
+        voxel_size: float = 0.02,
+        scale_correction: float = 1.0
     ) -> None:
         self.rgb_dir = rgb_dir
         self.depth_dir = depth_dir
@@ -92,6 +94,7 @@ class MultiwayReconstructorOffline:
         self.output_dir = output_dir
         self.output_pcd = output_pcd
         self.voxel_size = voxel_size
+        self.scale_correction = scale_correction
 
         self._validate_paths()
 
@@ -167,12 +170,17 @@ class MultiwayReconstructorOffline:
 
     def _save_metrics(self, cloud: o3d.geometry.PointCloud) -> None:
         aabb = cloud.get_axis_aligned_bounding_box()
+        volume = aabb.volume()
+        num_points = len(cloud.points)
+
         metrics = {
-            "num_points": len(cloud.points),
-            "volume_aabb": aabb.volume(),
+            "num_points": num_points,
+            "volume_aabb": volume,
             "extent_aabb": aabb.get_extent().tolist(),
-            "voxel_size": self.voxel_size
+            "voxel_size": self.voxel_size,
+            "avg_density": num_points / volume if volume > 0 else 0.0
         }
+
         metrics_path = self.output_dir / "reconstruction_metrics.json"
         with open(metrics_path, "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=4)
@@ -182,7 +190,11 @@ class MultiwayReconstructorOffline:
         print("[INFO] Loading intrinsics and RGB-D data...")
         intrinsic = IntrinsicLoader.load_from_json(self.intrinsics_path)
         clouds = RGBDLoader.load_point_clouds(
-            self.rgb_dir, self.depth_dir, intrinsic, self.voxel_size
+            self.rgb_dir,
+            self.depth_dir,
+            intrinsic,
+            self.voxel_size,
+            scale_correction=self.scale_correction
         )
 
         print("[INFO] Building pose graph...")
