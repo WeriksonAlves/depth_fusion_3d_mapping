@@ -1,0 +1,23 @@
+# This file is used to install the required packages for the project.
+
+# Core scientific and computer vision libraries
+numpy==1.26.4
+opencv-python==4.11.0.86
+open3d==0.19.0
+pandas==2.2.3
+torch==2.7.0+cu128
+torchaudio==2.7.0+cu128
+torchvision==0.22.0+cu128
+typing_extensions==4.12.2
+
+# Optional: if pip install fails for ROS2, install via apt:
+# sudo apt install ros-humble-rclpy python3-colcon-common-extensions
+
+
+# DepthAnythingV2
+gradio_imageslider
+gradio==4.29.0
+matplotlib
+opencv-python
+torch
+torchvision

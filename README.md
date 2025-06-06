@@ -91,6 +91,7 @@ pip3 install --upgrade pip
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128  # ou cu121/cu128 conforme sua GPU
 cd SIBGRAPI2025_slam/Depth_Anything_V2
 pip3 install -r requirements.txt
+
 pip3 install open3d opencv-python numpy "numpy<2" pandas
 ```
 
@@ -104,3 +105,4 @@ pip3 install open3d opencv-python numpy "numpy<2" pandas
 ### Substituir o D do sensor pelo D no estimafor e inferir novemente
 
 ### Comparar ambas as nuvens de pontos armazenadas
+
