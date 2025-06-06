@@ -23,9 +23,9 @@ def load_rgbd_images(
     for rgb_path, depth_path in zip(rgb_paths, depth_paths):
         color = o3d.io.read_image(str(rgb_path))
         depth_np = np.load(depth_path)
-        depth_o3d = o3d.geometry.Image((depth_np * 1).astype(np.uint16))  # em mm
+        depth_o3d = o3d.geometry.Image((depth_np * 1000).astype(np.uint16))  # em mm
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(
-            color, depth_o3d, depth_scale=1000.0, convert_rgb_to_intensity=False
+            color, depth_o3d, depth_scale=1000, convert_rgb_to_intensity=False
         )
         pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsic)
         pcd_down = pcd.voxel_down_sample(voxel_size)
@@ -94,6 +94,13 @@ def run_multiway_registration(
     intr_dir = dataset_path / "intrinsics.json"
     output_dir = output_path / "reconstruction_sensor.ply"
 
+    # Verifica estrutura de diretórios
+    if not dataset_path.exists():
+        raise FileNotFoundError(
+            f"[ERROR] Dataset directory not found: {dataset_path}")
+    if not output_path.exists():
+        output_path.mkdir(parents=True, exist_ok=True)
+
     intrinsic = load_intrinsics(intr_dir)
     pcds = load_rgbd_images(
         rgb_dir, depth_dir, intrinsic, voxel_size=voxel_size
@@ -121,19 +128,23 @@ def run_multiway_registration(
     print("[INFO] Applying transformations and combining point clouds...")
     for i in range(len(pcds)):
         pcds[i].transform(pose_graph.nodes[i].pose)
+    o3d.visualization.draw(pcds)
 
     pcd_combined = o3d.geometry.PointCloud()
     for pcd in pcds:
         pcd_combined += pcd
 
     print(f"[✓] Saving final point cloud to: {output_dir}")
-    o3d.io.write_point_cloud(str(output_dir), pcd_combined)
+    o3d.io.write_point_cloud(output_dir, pcd_combined, print_progress=True)
     o3d.visualization.draw([pcd_combined])
 
 
 if __name__ == "__main__":
+
+    scene = "lab_scene_f"
+
     run_multiway_registration(
-        dataset_path=Path("datasets/lab_scene_f"),
-        output_path=Path("results/lab_scene_f"),
+        dataset_path=Path(f"datasets/{scene}"),
+        output_path=Path(f"results/{scene}"),
         voxel_size=0.02
     )
