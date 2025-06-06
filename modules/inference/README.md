@@ -1,5 +1,11 @@
 ## 📁 `modules/inference/README.md`
 
+modules/inference/
+├── depth_estimator.py            # DepthAnythingV2Estimator (modelo)
+├── depth_batch_inferencer.py     # DepthBatchInferencer (inference em lote)
+├── depth_offline_runner.py       # DepthOfflineInference (wrapper CLI)
+└── __init__.py                   # API pública
+
 ### 🎯 Overview
 
 The `modules.inference` submodule provides tools for monocular depth estimation using the **DepthAnythingV2** model. It supports both:
