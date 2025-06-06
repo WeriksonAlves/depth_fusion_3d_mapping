@@ -6,7 +6,7 @@ device management, and RGB-to-depth inference.
 """
 
 import sys
-
+import json
 import os
 import cv2
 from tqdm import tqdm
@@ -142,7 +142,8 @@ class DepthBatchInferencer:
         output_path: Path,
         encoder: str = 'vits',
         checkpoint_dir: Path = Path('checkpoints'),
-        device: str = 'cuda'
+        device: str = 'cuda',
+        scaling_factor: Optional[float] = None
     ) -> None:
         """
         Initializes estimator and creates output directory.
@@ -153,11 +154,14 @@ class DepthBatchInferencer:
             encoder (str): Encoder type ('vits', 'vitb', etc.).
             checkpoint_dir (Path): Directory with model checkpoints.
             device (Optional[str]): Inference device ('cuda' or 'cpu').
+            scaling_factor (Optional[float]): Optional scaling factor for
+                depth.
         """
         self.input_dir = input_dir
         self.output_npy_dir = output_path / "depth_npy"
         self.output_png_dir = output_path / "depth_png"
         self.device = device
+        self.scaling_factor = scaling_factor
         self.estimator = DepthAnythingV2Estimator(
             encoder=encoder,
             checkpoint_dir=str(checkpoint_dir),
@@ -192,6 +196,8 @@ class DepthBatchInferencer:
             return
 
         depth = self.estimator.infer_depth(image)
+        if self.scaling_factor:
+            depth *= self.scaling_factor
         npy_path = self.output_npy_dir / img_path.with_suffix('.npy').name
         np.save(npy_path, depth)
 
@@ -208,6 +214,31 @@ class DepthBatchInferencer:
         image_paths = self._load_images()
         for img_path in tqdm(image_paths, desc="Estimating depth"):
             self._infer_and_save(img_path)
+
+        # Validate matching outputs
+        num_input = len(image_paths)
+        num_npy = len(list(self.output_npy_dir.glob("*.npy")))
+        num_png = len(list(self.output_png_dir.glob("*.png")))
+
+        if num_input != num_npy or num_input != num_png:
+            print("[WARNING] Mismatch detected between RGB and depth outputs!")
+        else:
+            print("[✓] All depth outputs match RGB inputs.")
+
+        summary = {
+            "num_input_rgb": num_input,
+            "num_output_npy": num_npy,
+            "num_output_png": num_png,
+            "match_npy": num_input == num_npy,
+            "match_png": num_input == num_png,
+            "all_match": (num_input == num_npy) and (num_input == num_png)
+        }
+
+        summary_path = self.output_npy_dir.parent / "inference_summary.json"
+        with open(summary_path, "w") as f:
+            json.dump(summary, f, indent=4)
+
+        print(f"[✓] Summary saved to: {summary_path}")
 
 
 def main() -> None:
@@ -226,7 +257,8 @@ def main() -> None:
         input_dir=input_dir,
         output_path=output_dir,
         encoder=encoder,
-        checkpoint_dir=checkpoint_dir
+        checkpoint_dir=checkpoint_dir,
+        scaling_factor=1
     )
 
     print("[INFO] Running depth inference...")
