@@ -18,30 +18,51 @@ O sistema já cobre as etapas de aquisição de imagens, estimação de profundi
 ```bash
 SIBGRAPI2025_slam/
 │
-├── main.py                         # Script principal: executa a geração e visualização de nuvem em tempo real
-├── test_depth_inference.py        # Testes com DepthAnythingV2 (webcam ou imagens)
-├── intrinsics_tester.py           # Avaliação de diferentes parâmetros intrínsecos da câmera
-│
+├── checkpoints/
+│   └── depth_anything_v2_vits.pth
+├── datasets/
+│   └── lab_scene_kinect_xyz/
+│       └── ...
+├── installs/
+│   ├── requirements.txt
+│   └── README_OCTOMAP.md
+├── launch/
+│   ├── align_reconstruction.launch.py
+│   ├── compare_reconstructions.launch.py
+│   └── check_realsense_topics.launch.py
 ├── modules/
-│   ├── depth_estimator.py             # Módulo de inferência de profundidade com DepthAnythingV2
-│   ├── point_cloud_processor.py       # Geração, filtragem e salvamento da nuvem de pontos com Open3D
-│   └── live_point_cloud_visualizer.py # Visualização ao vivo da nuvem com Open3D
-│
-├── Depth_Anything_V2/             # Repositório clonado do modelo de profundidade (renomeado)
-├── checkpoints
-│
-├── point_clouds/                  # Diretório esperado para salvar nuvens em `.ply` para o ROS2
-│   └── pcd.ply                    # Nuvem a ser publicada no ROS
-│
-├── results/                       # Saídas de testes, imagens e CSVs de resultados
-│   └── test/                      # Imagens e nuvens salvas durante testes com `main.py`
-│
-├── datasets/                      # Dataset de imagens RGB utilizadas (ex: TUM)
-│   └── rgbd_dataset_freiburg1_xyz/
-│       └── rgb/
-│
-├── README.md                      # Instruções completas de instalação, execução e publicação ROS
-└── requirements.txt               # (Dentro de Depth_Anything_V2) dependências do modelo
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   ├── README.md
+│   │   ├── align_reconstruction_node.py
+│   │   └── compare_reconstructions_node.py
+│   ├── inference/
+│   │   ├── __init__.py
+│   │   ├── README.md
+│   │   ├── depth_estimator.py
+│   │   └── depth_batch_inferencer.py
+│   ├── reconstruction/
+│   │   ├── __init__.py
+│   │   ├── README.md
+│   │   ├── frame_loader.py
+│   │   ├── graph_optimizer.py
+│   │   ├── map_merger_publisher_node.py
+│   │   ├── map_merger_publisher.py
+│   │   ├── pose_graph_builder.py
+│   │   └── multiway_reconstructor_node.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── README.md
+│       ├── point_cloud_processor.py
+│       ├── live_point_cloud_visualizer.py
+│       ├── reconstruction_viewer.py
+│       └── realsense_topic_checker_node.py
+├── results/
+│   └──  ...
+├── scripts_test/
+│   └──  ...
+├── main.py
+└── README.md  
 ```
 
 ## Execução
@@ -70,4 +91,18 @@ pip3 install --upgrade pip
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128  # ou cu121/cu128 conforme sua GPU
 cd SIBGRAPI2025_slam/Depth_Anything_V2
 pip3 install -r requirements.txt
+
 pip3 install open3d opencv-python numpy "numpy<2" pandas
+```
+
+### Gravar um .bag do sensor de entrada (Intel Realsense)
+
+
+### Extrair os dados .bag gravados
+
+### Infererir a nuvem de pontos com os dados do sensor
+
+### Substituir o D do sensor pelo D no estimafor e inferir novemente
+
+### Comparar ambas as nuvens de pontos armazenadas
+

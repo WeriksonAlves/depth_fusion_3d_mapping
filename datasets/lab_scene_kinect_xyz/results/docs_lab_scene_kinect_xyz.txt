@@ -1,0 +1,41 @@
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ python3 test2/run_multiway_reconstruction.py     --dataset datasets/lab_scene_kinect_xyz     --mode real
+xFormers not available
+xFormers not available
+[INFO] Starting multiway reconstruction (real)...
+[✓] Merged map saved to: datasets/lab_scene_kinect_xyz/reconstruction_d435.ply
+[INFO] Total points: 1096940
+[INFO] Bounding box volume: 53.0697 m³
+[✓] Reconstruction complete.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ python3 test2/run_multiway_reconstruction.py     --dataset datasets/lab_scene_kinect_xyz     --mode mono
+xFormers not available
+xFormers not available
+[INFO] Starting multiway reconstruction (mono)...
+[✓] Merged map saved to: datasets/lab_scene_kinect_xyz/reconstruction_depthanything.ply
+[INFO] Total points: 9176221
+[INFO] Bounding box volume: 257.6988 m³
+[✓] Reconstruction complete.
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/test2/align_reconstructions.py
+xFormers not available
+xFormers not available
+[INFO] Loading point clouds...
+[INFO] Running ICP with scaling...
+[OK] Fitness: 0.0169
+[OK] RMSE: 0.0157
+[✓] Transformation matrix saved to: results/lab_scene_kinect_xyz/T_d_to_m.npy
+[✓] Aligned point cloud saved to: results/lab_scene_kinect_xyz/reconstruction_depthanything_aligned.ply
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/test2/compare_reconstructions.py
+xFormers not available
+xFormers not available
+[INFO] Loading point clouds...
+[INFO] Scaling mono PCD by factor 0.4
+[INFO] Launching Open3D visualizer...
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/test2/compare_reconstructions.py
+xFormers not available
+xFormers not available
+[INFO] Loading point clouds...
+[INFO] Launching Open3D visualizer...
+(.venv) werikson@werikson-vaio:~/GitHub/SIBGRAPI2025_slam$ /home/werikson/GitHub/SIBGRAPI2025_slam/.venv/bin/python /home/werikson/GitHub/SIBGRAPI2025_slam/test2/compare_aligned_reconstructions.py
+xFormers not available
+xFormers not available
+[INFO] Loading point clouds...
+[INFO] Launching Open3D visualizer...
