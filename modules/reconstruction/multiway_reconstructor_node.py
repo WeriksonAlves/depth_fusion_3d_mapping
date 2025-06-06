@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Optional
 
 import open3d as o3d
-import rclpy
 from rclpy.node import Node
 
 from modules.utils.point_cloud_processor import PointCloudProcessor
@@ -55,7 +54,7 @@ class MultiwayReconstructor:
         self.dataset_dir = dataset_dir
         self.rgb_dir = dataset_dir / "rgb"
         if mode == "real":
-            self.depth_dir = dataset_dir / "depth"
+            self.depth_dir = dataset_dir / "depth_npy"
         else:
             self.depth_dir = output_dir / "depth_mono"
 
@@ -122,6 +121,7 @@ class MultiwayReconstructor:
         builder = PoseGraphBuilder(voxel_size=self.voxel_size)
         pose_graph = builder.build(point_clouds)
 
+        print("Optimizing PoseGraph ...")
         optimizer = GraphOptimizer(voxel_size=self.voxel_size)
         optimizer.optimize(pose_graph, point_clouds)
 
@@ -131,43 +131,3 @@ class MultiwayReconstructor:
             voxel_size=self.voxel_size
         )
         merger.merge_and_publish(point_clouds)
-
-
-class MultiwayReconstructorNode(Node):
-    """
-    ROS 2 Node to trigger multiway 3D reconstruction from disk.
-    """
-
-    def __init__(self) -> None:
-        super().__init__('multiway_reconstructor_node')
-
-        dataset_path = Path("datasets/lab_scene_kinect_xyz")
-        mode = "real"  # or "mono"
-
-        self.get_logger().info("Starting 3D reconstruction pipeline...")
-
-        reconstructor = MultiwayReconstructor(
-            dataset_dir=dataset_path,
-            mode=mode,
-            ros_node=self,
-            voxel_size=0.02,
-            depth_scale=5000.0,
-            depth_trunc=4.0,
-            frame_id="map",
-            topic="/o3d_points"
-        )
-        reconstructor.run()
-
-        self.get_logger().info("Reconstruction complete and map published.")
-
-
-def main() -> None:
-    rclpy.init()
-    try:
-        node = MultiwayReconstructorNode()
-        rclpy.spin_once(node, timeout_sec=0.1)
-    except KeyboardInterrupt:
-        print("[Shutdown] Interrupted by user.")
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()

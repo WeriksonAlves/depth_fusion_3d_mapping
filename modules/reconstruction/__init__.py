@@ -14,8 +14,7 @@ from modules.reconstruction.map_merger_publisher_node import (
     MapMergerPublisherNode
 )
 from modules.reconstruction.multiway_reconstructor_node import (
-    MultiwayReconstructor,
-    MultiwayReconstructorNode
+    MultiwayReconstructor
 )
 
 __all__ = [

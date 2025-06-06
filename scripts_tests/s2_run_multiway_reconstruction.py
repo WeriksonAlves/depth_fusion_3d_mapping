@@ -1,4 +1,3 @@
-import argparse
 from pathlib import Path
 
 # Adiciona raiz do projeto ao sys.path
@@ -9,8 +8,10 @@ from modules.reconstruction.multiway_reconstructor_node import MultiwayReconstru
 
 def main():
     # Dataset base path
-    dataset_path = Path("datasets/lab_scene_03")
-    output_path = Path("results/lab_scene_03")
+    scene_dir = Path("lab_scene_01")
+
+    dataset_path = Path(f"datasets/{scene_dir}")
+    output_path = Path(f"results/{scene_dir}")
 
     # Verifica estrutura de diretórios
     if not dataset_path.exists():
@@ -24,10 +25,10 @@ def main():
     reconstructor = MultiwayReconstructor(
         dataset_dir=dataset_path,
         output_dir=output_path,
-        mode="mono",  # real or mono"
+        mode="real",  # real or mono"
         ros_node=None,
         voxel_size=0.02,
-        depth_scale=850.0,
+        depth_scale=500.0,
         depth_trunc=4.0,
         frame_id="map",
         topic="/o3d_points"
