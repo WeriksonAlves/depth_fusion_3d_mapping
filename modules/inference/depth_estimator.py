@@ -7,10 +7,8 @@ device management, and RGB-to-depth inference.
 
 import os
 from typing import Optional
-
 import numpy as np
 import torch
-
 from Depth_Anything_V2.depth_anything_v2.dpt import DepthAnythingV2
 
 
@@ -78,7 +76,6 @@ class DepthAnythingV2Estimator:
                 'out_channels': [1536, 1536, 1536, 1536]
             }
         }
-
         if self.encoder not in configs:
             raise ValueError(f"Unsupported encoder: {self.encoder}")
         return configs[self.encoder]
@@ -95,18 +92,16 @@ class DepthAnythingV2Estimator:
         """
         config = self._get_model_config()
         model = DepthAnythingV2(**config)
-
-        checkpoint_path = os.path.join(
+        ckpt_path = os.path.join(
             checkpoint_dir,
             f'depth_anything_v2_{self.encoder}.pth'
         )
-
         model.load_state_dict(
-            torch.load(checkpoint_path, map_location=self.device)
+            torch.load(ckpt_path, map_location=self.device)
         )
         return model.to(self.device).eval()
 
-    def infer_depth(self, rgb_image: np.ndarray) -> torch.Tensor:
+    def infer_depth(self, rgb_image: np.ndarray) -> np.ndarray:
         """
         Estimates depth from an RGB input image.
 
@@ -116,4 +111,6 @@ class DepthAnythingV2Estimator:
         Returns:
             torch.Tensor: Estimated depth map as tensor.
         """
-        return self.model.infer_image(rgb_image)
+        depth = self.model.infer_image(rgb_image)
+        return depth.cpu().numpy() if isinstance(depth,
+                                                 torch.Tensor) else depth
