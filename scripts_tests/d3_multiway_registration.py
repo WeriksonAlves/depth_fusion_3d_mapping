@@ -187,7 +187,23 @@ class MultiwayReconstructorOffline:
             merged += pcd
 
         print(f"[✓] Saving final reconstruction to: {self.output_pcd}")
-        o3d.io.write_point_cloud(self.output_pcd, merged, print_progress=True)
+        o3d.io.write_point_cloud(self.output_pcd, merged)
+
+        # Compute and save basic metrics
+        aabb = merged.get_axis_aligned_bounding_box()
+        metrics = {
+            "num_points": len(merged.points),
+            "volume_aabb": aabb.volume(),
+            "extent_aabb": aabb.get_extent().tolist(),  # [x, y, z] extent
+            "voxel_size": self.voxel_size
+        }
+
+        metrics_path = self.output_path / "reconstruction_metrics.json"
+        with open(metrics_path, "w") as f:
+            json.dump(metrics, f, indent=4)
+
+        print(f"[✓] Metrics saved to: {metrics_path}")
+
         o3d.visualization.draw([merged])
 
 
