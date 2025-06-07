@@ -281,7 +281,7 @@ def main() -> None:
     scene = "lab_scene_f"
     scale = 100
     trunc = 3.0  # Adjust as needed
-    mode = "mono-priority"  # Fusion mode: 'min', 'mean', 'real-priority', 'mono-priority'
+    mode = "min"  # Fusion mode: 'min', 'mean', 'real-priority', 'mono-priority'
 
     rgb_dir = Path(f"datasets/{scene}/rgb")
     depth_real_dir = Path(f"datasets/{scene}/depth_npy")
