@@ -88,9 +88,7 @@ class FrameICPAligner:
             target=tgt_down,
             max_correspondence_distance=self._voxel_size * 2.5,
             init=np.eye(4),
-            estimation_method=(
-                o3d.pipelines.registration.TransformationEstimationPointToPlane()
-            )
+            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane()
         )
 
         print(f"[✓] ICP Fitness: {result.fitness:.4f}")
@@ -142,7 +140,8 @@ class FrameICPAligner:
             json.dump(metrics, f, indent=4)
 
         print(
-            f"[✓] Transformation saved to: {out_dir/'T_d_to_m_frame0000.npy'}"
+            f"[✓] Transformation saved to:"
+            f"{out_dir/'T_d_to_m_frame{self._frame_index:04d}.npy'}"
         )
         print(f"[✓] ICP metrics saved to: {out_dir/'icp_metrics.json'}")
 
