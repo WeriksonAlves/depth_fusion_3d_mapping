@@ -10,7 +10,6 @@ This package exposes the core submodules:
 
 from modules import inference
 from modules import reconstruction
-from modules import evaluation
 from modules import utils
 
 __all__ = [
