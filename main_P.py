@@ -21,9 +21,9 @@ def main_d3() -> None:
 
 
 def main_d4() -> None:
-    scene = "lab_scene_f"
+    scene = "lab_scene_d"
     input_dir = Path(f"datasets/{scene}/rgb")
-    output_dir = Path(f"results/{scene}/estimated")
+    output_dir = Path(f"results/{scene}/d4")
     checkpoint_dir = Path("checkpoints")
     encoder = "vits"
 
@@ -61,4 +61,4 @@ def main_d5() -> None:
 
 
 if __name__ == "__main__":
-    main_d3()
+    main_d5()
