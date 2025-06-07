@@ -278,7 +278,7 @@ def main() -> None:
     """
     Runs fusion for a specific dataset scene.
     """
-    scene = "lab_scene_f"
+    scene = "lab_scene_d"
     scale = 100
     trunc = 3.0  # Adjust as needed
     mode = "min"  # Fusion mode: 'min', 'mean', 'real-priority', 'mono-priority'
