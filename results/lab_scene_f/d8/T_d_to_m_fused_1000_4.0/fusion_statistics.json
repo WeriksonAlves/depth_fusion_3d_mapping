@@ -1,0 +1,422 @@
+[
+    {
+        "frame": "frame_0000",
+        "valid_pixels": 263398,
+        "depth_min_m": 0.22100000083446503,
+        "depth_max_m": 16.709999084472656,
+        "depth_mean_m": 1.4155888557434082
+    },
+    {
+        "frame": "frame_0001",
+        "valid_pixels": 261514,
+        "depth_min_m": 0.21899999678134918,
+        "depth_max_m": 65.53500366210938,
+        "depth_mean_m": 1.5119932889938354
+    },
+    {
+        "frame": "frame_0002",
+        "valid_pixels": 261226,
+        "depth_min_m": 0.21799999475479126,
+        "depth_max_m": 29.441999435424805,
+        "depth_mean_m": 1.4414234161376953
+    },
+    {
+        "frame": "frame_0003",
+        "valid_pixels": 261774,
+        "depth_min_m": 0.2199999988079071,
+        "depth_max_m": 61.827999114990234,
+        "depth_mean_m": 1.439084529876709
+    },
+    {
+        "frame": "frame_0004",
+        "valid_pixels": 263056,
+        "depth_min_m": 0.21199999749660492,
+        "depth_max_m": 25.761999130249023,
+        "depth_mean_m": 1.403045892715454
+    },
+    {
+        "frame": "frame_0005",
+        "valid_pixels": 263070,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 65.53500366210938,
+        "depth_mean_m": 1.4133987426757812
+    },
+    {
+        "frame": "frame_0006",
+        "valid_pixels": 261827,
+        "depth_min_m": 0.2199999988079071,
+        "depth_max_m": 19.94499969482422,
+        "depth_mean_m": 1.4099260568618774
+    },
+    {
+        "frame": "frame_0007",
+        "valid_pixels": 261188,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 11.241999626159668,
+        "depth_mean_m": 1.416374921798706
+    },
+    {
+        "frame": "frame_0008",
+        "valid_pixels": 262392,
+        "depth_min_m": 0.21199999749660492,
+        "depth_max_m": 6.183000087738037,
+        "depth_mean_m": 1.420283555984497
+    },
+    {
+        "frame": "frame_0009",
+        "valid_pixels": 263754,
+        "depth_min_m": 0.2280000001192093,
+        "depth_max_m": 11.666000366210938,
+        "depth_mean_m": 1.4327472448349
+    },
+    {
+        "frame": "frame_0010",
+        "valid_pixels": 263452,
+        "depth_min_m": 0.210999995470047,
+        "depth_max_m": 6.507999897003174,
+        "depth_mean_m": 1.450137972831726
+    },
+    {
+        "frame": "frame_0011",
+        "valid_pixels": 263056,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 6.440000057220459,
+        "depth_mean_m": 1.450620174407959
+    },
+    {
+        "frame": "frame_0012",
+        "valid_pixels": 263463,
+        "depth_min_m": 0.21400000154972076,
+        "depth_max_m": 6.507999897003174,
+        "depth_mean_m": 1.4510493278503418
+    },
+    {
+        "frame": "frame_0013",
+        "valid_pixels": 264485,
+        "depth_min_m": 0.22100000083446503,
+        "depth_max_m": 5.833000183105469,
+        "depth_mean_m": 1.4251452684402466
+    },
+    {
+        "frame": "frame_0014",
+        "valid_pixels": 262919,
+        "depth_min_m": 0.2199999988079071,
+        "depth_max_m": 6.061999797821045,
+        "depth_mean_m": 1.4510661363601685
+    },
+    {
+        "frame": "frame_0015",
+        "valid_pixels": 263652,
+        "depth_min_m": 0.21899999678134918,
+        "depth_max_m": 5.724999904632568,
+        "depth_mean_m": 1.4372055530548096
+    },
+    {
+        "frame": "frame_0016",
+        "valid_pixels": 263773,
+        "depth_min_m": 0.21699999272823334,
+        "depth_max_m": 6.507999897003174,
+        "depth_mean_m": 1.4435597658157349
+    },
+    {
+        "frame": "frame_0017",
+        "valid_pixels": 263231,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 6.061999797821045,
+        "depth_mean_m": 1.4340527057647705
+    },
+    {
+        "frame": "frame_0018",
+        "valid_pixels": 264453,
+        "depth_min_m": 0.21400000154972076,
+        "depth_max_m": 6.122000217437744,
+        "depth_mean_m": 1.4355946779251099
+    },
+    {
+        "frame": "frame_0019",
+        "valid_pixels": 262697,
+        "depth_min_m": 0.21299999952316284,
+        "depth_max_m": 6.002999782562256,
+        "depth_mean_m": 1.435578465461731
+    },
+    {
+        "frame": "frame_0020",
+        "valid_pixels": 263352,
+        "depth_min_m": 0.21199999749660492,
+        "depth_max_m": 6.122000217437744,
+        "depth_mean_m": 1.4326900243759155
+    },
+    {
+        "frame": "frame_0021",
+        "valid_pixels": 264070,
+        "depth_min_m": 0.210999995470047,
+        "depth_max_m": 6.374000072479248,
+        "depth_mean_m": 1.4340089559555054
+    },
+    {
+        "frame": "frame_0022",
+        "valid_pixels": 264155,
+        "depth_min_m": 0.20800000429153442,
+        "depth_max_m": 6.869999885559082,
+        "depth_mean_m": 1.43692946434021
+    },
+    {
+        "frame": "frame_0023",
+        "valid_pixels": 266053,
+        "depth_min_m": 0.20399999618530273,
+        "depth_max_m": 6.183000087738037,
+        "depth_mean_m": 1.4333808422088623
+    },
+    {
+        "frame": "frame_0024",
+        "valid_pixels": 265275,
+        "depth_min_m": 0.2029999941587448,
+        "depth_max_m": 6.122000217437744,
+        "depth_mean_m": 1.4310718774795532
+    },
+    {
+        "frame": "frame_0025",
+        "valid_pixels": 264797,
+        "depth_min_m": 0.20000000298023224,
+        "depth_max_m": 6.869999885559082,
+        "depth_mean_m": 1.428081750869751
+    },
+    {
+        "frame": "frame_0026",
+        "valid_pixels": 264789,
+        "depth_min_m": 0.19900000095367432,
+        "depth_max_m": 6.6479997634887695,
+        "depth_mean_m": 1.4289398193359375
+    },
+    {
+        "frame": "frame_0027",
+        "valid_pixels": 266198,
+        "depth_min_m": 0.19699999690055847,
+        "depth_max_m": 6.71999979019165,
+        "depth_mean_m": 1.4227977991104126
+    },
+    {
+        "frame": "frame_0028",
+        "valid_pixels": 266031,
+        "depth_min_m": 0.19699999690055847,
+        "depth_max_m": 6.577000141143799,
+        "depth_mean_m": 1.4197033643722534
+    },
+    {
+        "frame": "frame_0029",
+        "valid_pixels": 267469,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.71999979019165,
+        "depth_mean_m": 1.4123995304107666
+    },
+    {
+        "frame": "frame_0030",
+        "valid_pixels": 267204,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.577000141143799,
+        "depth_mean_m": 1.385633111000061
+    },
+    {
+        "frame": "frame_0031",
+        "valid_pixels": 267464,
+        "depth_min_m": 0.19499999284744263,
+        "depth_max_m": 6.794000148773193,
+        "depth_mean_m": 1.4114621877670288
+    },
+    {
+        "frame": "frame_0032",
+        "valid_pixels": 266756,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.794000148773193,
+        "depth_mean_m": 1.4177016019821167
+    },
+    {
+        "frame": "frame_0033",
+        "valid_pixels": 266620,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.6479997634887695,
+        "depth_mean_m": 1.412969946861267
+    },
+    {
+        "frame": "frame_0034",
+        "valid_pixels": 268407,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.71999979019165,
+        "depth_mean_m": 1.4050308465957642
+    },
+    {
+        "frame": "frame_0035",
+        "valid_pixels": 268400,
+        "depth_min_m": 0.19499999284744263,
+        "depth_max_m": 6.869999885559082,
+        "depth_mean_m": 1.4074233770370483
+    },
+    {
+        "frame": "frame_0036",
+        "valid_pixels": 268558,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.869999885559082,
+        "depth_mean_m": 1.39811110496521
+    },
+    {
+        "frame": "frame_0037",
+        "valid_pixels": 269211,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 7.189000129699707,
+        "depth_mean_m": 1.3938721418380737
+    },
+    {
+        "frame": "frame_0038",
+        "valid_pixels": 269162,
+        "depth_min_m": 0.19599999487400055,
+        "depth_max_m": 6.577000141143799,
+        "depth_mean_m": 1.3868812322616577
+    },
+    {
+        "frame": "frame_0039",
+        "valid_pixels": 270568,
+        "depth_min_m": 0.1940000057220459,
+        "depth_max_m": 6.6479997634887695,
+        "depth_mean_m": 1.3852826356887817
+    },
+    {
+        "frame": "frame_0040",
+        "valid_pixels": 272459,
+        "depth_min_m": 0.21699999272823334,
+        "depth_max_m": 6.577000141143799,
+        "depth_mean_m": 1.3651621341705322
+    },
+    {
+        "frame": "frame_0041",
+        "valid_pixels": 272842,
+        "depth_min_m": 0.2199999988079071,
+        "depth_max_m": 6.794000148773193,
+        "depth_mean_m": 1.3581724166870117
+    },
+    {
+        "frame": "frame_0042",
+        "valid_pixels": 273405,
+        "depth_min_m": 0.22100000083446503,
+        "depth_max_m": 6.869999885559082,
+        "depth_mean_m": 1.345494031906128
+    },
+    {
+        "frame": "frame_0043",
+        "valid_pixels": 272607,
+        "depth_min_m": 0.2199999988079071,
+        "depth_max_m": 7.026000022888184,
+        "depth_mean_m": 1.3414762020111084
+    },
+    {
+        "frame": "frame_0044",
+        "valid_pixels": 271949,
+        "depth_min_m": 0.21799999475479126,
+        "depth_max_m": 6.794000148773193,
+        "depth_mean_m": 1.3551408052444458
+    },
+    {
+        "frame": "frame_0045",
+        "valid_pixels": 272337,
+        "depth_min_m": 0.2160000056028366,
+        "depth_max_m": 8.470000267028809,
+        "depth_mean_m": 1.3409045934677124
+    },
+    {
+        "frame": "frame_0046",
+        "valid_pixels": 272230,
+        "depth_min_m": 0.2160000056028366,
+        "depth_max_m": 6.947000026702881,
+        "depth_mean_m": 1.3502815961837769
+    },
+    {
+        "frame": "frame_0047",
+        "valid_pixels": 273210,
+        "depth_min_m": 0.21799999475479126,
+        "depth_max_m": 6.577000141143799,
+        "depth_mean_m": 1.3406928777694702
+    },
+    {
+        "frame": "frame_0048",
+        "valid_pixels": 271833,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 7.10699987411499,
+        "depth_mean_m": 1.3195128440856934
+    },
+    {
+        "frame": "frame_0049",
+        "valid_pixels": 271386,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 6.6479997634887695,
+        "depth_mean_m": 1.3364506959915161
+    },
+    {
+        "frame": "frame_0050",
+        "valid_pixels": 269709,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 7.27400016784668,
+        "depth_mean_m": 1.3174868822097778
+    },
+    {
+        "frame": "frame_0051",
+        "valid_pixels": 270648,
+        "depth_min_m": 0.21400000154972076,
+        "depth_max_m": 11.449999809265137,
+        "depth_mean_m": 1.3167297840118408
+    },
+    {
+        "frame": "frame_0052",
+        "valid_pixels": 271663,
+        "depth_min_m": 0.20999999344348907,
+        "depth_max_m": 19.94499969482422,
+        "depth_mean_m": 1.3317632675170898
+    },
+    {
+        "frame": "frame_0053",
+        "valid_pixels": 271165,
+        "depth_min_m": 0.20600000023841858,
+        "depth_max_m": 9.972000122070312,
+        "depth_mean_m": 1.3271393775939941
+    },
+    {
+        "frame": "frame_0054",
+        "valid_pixels": 270885,
+        "depth_min_m": 0.20800000429153442,
+        "depth_max_m": 14.378999710083008,
+        "depth_mean_m": 1.3541724681854248
+    },
+    {
+        "frame": "frame_0055",
+        "valid_pixels": 270531,
+        "depth_min_m": 0.2199999988079071,
+        "depth_max_m": 11.241999626159668,
+        "depth_mean_m": 1.3436113595962524
+    },
+    {
+        "frame": "frame_0056",
+        "valid_pixels": 269194,
+        "depth_min_m": 0.2029999941587448,
+        "depth_max_m": 10.65999984741211,
+        "depth_mean_m": 1.338355302810669
+    },
+    {
+        "frame": "frame_0057",
+        "valid_pixels": 269557,
+        "depth_min_m": 0.2029999941587448,
+        "depth_max_m": 11.241999626159668,
+        "depth_mean_m": 1.3610053062438965
+    },
+    {
+        "frame": "frame_0058",
+        "valid_pixels": 270972,
+        "depth_min_m": 0.2150000035762787,
+        "depth_max_m": 10.305000305175781,
+        "depth_mean_m": 1.3726879358291626
+    },
+    {
+        "frame": "frame_0059",
+        "valid_pixels": 270853,
+        "depth_min_m": 0.21299999952316284,
+        "depth_max_m": 10.847000122070312,
+        "depth_mean_m": 1.3908665180206299
+    }
+]

@@ -122,6 +122,7 @@ def fuse_dataset_depth_maps(
         "[ERROR] Frame count mismatch between RGB and depth sources."
     )
 
+    stats_per_frame = []
     for rgb_path, real_path, mono_path in zip(rgb_files,
                                               real_files,
                                               mono_files):
@@ -161,7 +162,79 @@ def fuse_dataset_depth_maps(
         cv2.imwrite(str(png_path), fused)
         np.save(npy_path, fused.astype(np.float32) / depth_scale)
 
-        print(f"[✓] Saved fused maps: {png_path.name} | valid pixels: {np.count_nonzero(fused)}")
+        # Coletar estatísticas do frame atual
+        valid_mask = fused > 0
+        depth_valid = fused[valid_mask].astype(np.float32) / depth_scale
+
+        frame_stats = {
+            "frame": rgb_path.stem,
+            "valid_pixels": int(np.count_nonzero(valid_mask)),
+            "depth_min_m": float(depth_valid.min()
+                                 ) if depth_valid.size else None,
+            "depth_max_m": float(depth_valid.max()
+                                 ) if depth_valid.size else None,
+            "depth_mean_m": float(depth_valid.mean()
+                                  ) if depth_valid.size else None
+        }
+        stats_per_frame.append(frame_stats)
+
+        print(f"[✓] Saved fused maps: {png_path.name} | \
+              valid pixels: {np.count_nonzero(fused)}")
+
+    stats_path = output_dir / "fusion_statistics.json"
+    with open(stats_path, "w", encoding="utf-8") as f:
+        json.dump(stats_per_frame, f, indent=4)
+    print(f"[✓] Saved fusion statistics: {stats_path}")
+
+
+def visualize_depth_maps(
+    rgb_path: Path,
+    depth_real_path: Path,
+    depth_mono_path: Path,
+    depth_fused_path: Path,
+    depth_scale: float = 10000.0,
+    max_display_depth: float = 3.0
+) -> None:
+    """
+    Visualiza mapa de profundidade real, monocular e fundido lado a lado.
+
+    Args:
+        rgb_path (Path): Caminho para imagem RGB.
+        depth_real_path (Path): .npy com profundidade real (em metros).
+        depth_mono_path (Path): .npy com profundidade monocular (em metros).
+        depth_fused_path (Path): .npy com profundidade fundida (em metros).
+        depth_scale (float): Fator de conversão metros → milímetros.
+        max_display_depth (float): Profundidade máxima para visualização.
+    """
+    rgb = cv2.imread(str(rgb_path))
+    rgb = cv2.resize(rgb, (rgb.shape[1] // 2, rgb.shape[0] // 2))  # opcional
+
+    def depth_to_colormap(depth: np.ndarray) -> np.ndarray:
+        depth_vis = np.clip(depth, 0.0, max_display_depth)
+        norm = (depth_vis * 255 / max_display_depth).astype(np.uint8)
+        return cv2.applyColorMap(norm, cv2.COLORMAP_JET)
+
+    depth_real = np.load(depth_real_path)
+    depth_mono = np.load(depth_mono_path)
+    depth_fused = np.load(depth_fused_path)
+
+    vis_real = depth_to_colormap(depth_real)
+    vis_mono = depth_to_colormap(depth_mono)
+    vis_fused = depth_to_colormap(depth_fused)
+
+    # Resize all depth maps to match RGB image shape
+    target_shape = (rgb.shape[1], rgb.shape[0])  # width x height
+    vis_real = cv2.resize(vis_real, target_shape)
+    vis_mono = cv2.resize(vis_mono, target_shape)
+    vis_fused = cv2.resize(vis_fused, target_shape)
+
+    top = np.hstack([rgb, vis_real])
+    bottom = np.hstack([vis_mono, vis_fused])
+    collage = np.vstack([top, bottom])
+
+    cv2.imshow("RGB | Real Depth | Mono Depth | Fused Depth", collage)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def main() -> None:
@@ -170,17 +243,31 @@ def main() -> None:
     """
     scene = "lab_scene_f"
     scale = 100
-    depth_trunc = 4.0  # Adjust as needed
+    trunc = 3.0  # Adjust as needed
+
+    rgb_dir = Path(f"datasets/{scene}/rgb")
+    depth_real_dir = Path(f"datasets/{scene}/depth_npy")
+    depth_mono_dir = Path(f"results/{scene}/d4/depth_npy")
+    transform_path = Path(f"results/{scene}/d6/T_d_to_m_frame0000.npy")
+    output_dir = Path(f"results/{scene}/d8/T_d_to_m_fused_{scale}_{trunc}")
+    intrinsics = load_intrinsics(Path(f"datasets/{scene}/intrinsics.json"))
 
     fuse_dataset_depth_maps(
-        rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_real_dir=Path(f"datasets/{scene}/depth_npy"),
-        depth_mono_dir=Path(f"results/{scene}/d4/depth_npy"),
-        transform_path=Path(f"results/{scene}/d6/T_d_to_m_frame0000.npy"),
-        output_dir=Path(f"results/{scene}/d8/T_d_to_m_depth_fused2_{scale}"),
-        intrinsics=load_intrinsics(Path(f"datasets/{scene}/intrinsics.json")),
+        rgb_dir=rgb_dir,
+        depth_real_dir=depth_real_dir,
+        depth_mono_dir=depth_mono_dir,
+        transform_path=transform_path,
+        output_dir=output_dir,
+        intrinsics=intrinsics,
         depth_scale=scale,
-        depth_trunc=depth_trunc
+        depth_trunc=trunc
+    )
+
+    visualize_depth_maps(
+        rgb_path=rgb_dir / "frame_0000.png",
+        depth_real_path=depth_real_dir / "frame_0000.npy",
+        depth_mono_path=depth_mono_dir / "frame_0000.npy",
+        depth_fused_path=output_dir / "frame_0000.npy"
     )
 
 
