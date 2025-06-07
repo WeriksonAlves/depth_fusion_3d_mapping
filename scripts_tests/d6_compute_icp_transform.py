@@ -157,7 +157,7 @@ def main() -> None:
     """
     Example: aligns frame_0000 from scene 'lab_scene_f'.
     """
-    run_icp_alignment_for_frame(scene="lab_scene_f", frame_index=0)
+    run_icp_alignment_for_frame(scene="lab_scene_d", frame_index=0)
 
 
 if __name__ == "__main__":
