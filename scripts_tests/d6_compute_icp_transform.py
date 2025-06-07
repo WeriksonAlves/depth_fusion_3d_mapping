@@ -53,7 +53,7 @@ def compute_icp_alignment(
     source: o3d.geometry.PointCloud,
     target: o3d.geometry.PointCloud,
     voxel_size: float = 0.02
-) -> np.ndarray:
+) -> tuple[np.ndarray, o3d.pipelines.registration.RegistrationResult]:
     """
     Aligns source to target using ICP (point-to-plane) and returns
     transformation matrix.
@@ -82,7 +82,16 @@ def compute_icp_alignment(
 
     print(f"[✓] ICP Fitness: {icp_result.fitness:.4f}")
     print(f"[✓] ICP RMSE: {icp_result.inlier_rmse:.4f}")
-    return icp_result.transformation
+    return icp_result.transformation, icp_result
+
+
+def visualize_alignment(source, target, transform):
+    source_temp = source.transform(transform.copy())
+    o3d.visualization.draw_geometries(
+        [target.paint_uniform_color([1, 0.706, 0]),
+         source_temp.paint_uniform_color([0, 0.651, 0.929])],
+        window_name="ICP Alignment: Mono (blue) → Real (yellow)"
+    )
 
 
 def run_icp_alignment_for_frame(
@@ -116,14 +125,32 @@ def run_icp_alignment_for_frame(
                                   intrinsics, depth_scale)
 
     print("[INFO] Running ICP to align monocular to real depth...")
-    transformation = compute_icp_alignment(pcd_mono, pcd_real, voxel_size)
+    transformation, icp_result = compute_icp_alignment(
+        pcd_mono, pcd_real, voxel_size
+    )
 
     output_dir = results_dir / "d6"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = output_dir / "T_d_to_m.npy"
+    transformation = np.linalg.inv(transformation)  # T_m_from_d
     np.save(output_file, transformation)
     print(f"[✓] Transformation saved to: {output_file}")
+
+    # Visualização
+    visualize_alignment(pcd_mono, pcd_real, transformation)
+
+    # Salva métricas
+    icp_metrics = {
+        "fitness": float(icp_result.fitness),
+        "inlier_rmse": float(icp_result.inlier_rmse),
+        "voxel_size": voxel_size,
+        "num_points_source": len(pcd_mono.points),
+        "num_points_target": len(pcd_real.points)
+    }
+    with open(output_dir / "icp_metrics.json", "w", encoding="utf-8") as f:
+        json.dump(icp_metrics, f, indent=4)
+    print(f"[✓] ICP metrics saved to: {output_dir/'icp_metrics.json'}")
 
 
 def main() -> None:
