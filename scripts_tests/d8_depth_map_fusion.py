@@ -71,20 +71,55 @@ def project_point_cloud_to_depth(
 
 
 def fuse_depth_maps(real: np.ndarray,
-                    projected_mono: np.ndarray) -> np.ndarray:
+                    projected_mono: np.ndarray,
+                    mode: str = "min") -> np.ndarray:
     """
-    Performs conditional fusion:
-    - If real == 0 → use mono
-    - If mono == 0 → use real
-    - Else         → use min(real, mono)
+    Fuses real and projected monocular depth maps.
+
+    Args:
+        real: Real depth map (e.g., from D435).
+        projected_mono: Projected monocular depth map.
+        mode: Fusion mode, 'min', 'mean', 'real-priority' and mono-priority.
+
+    Returns:
+        Fused depth map as a numpy array.
     """
-    fused = np.where(
-        real == 0,
-        projected_mono,
-        np.where((real > 0) & (projected_mono > 0),
-                 np.minimum(real, projected_mono),
-                 real)
-    )
+
+    # Performs conditional fusion:
+    # - If real == 0 → use mono
+    # - If mono == 0 → use real
+    # - Else         → use min(real, mono)
+
+    if mode == "min":
+        fused = np.where(
+            real == 0,
+            projected_mono,
+            np.where((real > 0) & (projected_mono > 0),
+                     np.minimum(real, projected_mono),
+                     real)
+        )
+    elif mode == "mean":
+        fused = np.where(
+            real == 0,
+            projected_mono,
+            np.where((real > 0) & (projected_mono > 0),
+                     (real + projected_mono) / 2.0,
+                     real)
+        )
+    elif mode == "real-priority":
+        fused = np.where(
+            real > 0,
+            real,
+            projected_mono
+        )
+    elif mode == "mono-priority":
+        fused = np.where(
+            projected_mono > 0,
+            projected_mono,
+            real
+        )
+    else:
+        raise ValueError(f"Unsupported fusion mode: {mode}")
     return fused
 
 
@@ -96,7 +131,8 @@ def fuse_dataset_depth_maps(
     output_dir: Path,
     intrinsics: o3d.camera.PinholeCameraIntrinsic,
     depth_scale: float = 5000.0,
-    depth_trunc: float = 4.0
+    depth_trunc: float = 4.0,
+    mode: str = "min"
 ) -> None:
     """
     Fuses real and monocular depth maps using a known transformation.
@@ -110,6 +146,7 @@ def fuse_dataset_depth_maps(
         intrinsics: Open3D intrinsics.
         depth_scale: Scale factor for uint16 conversion.
         depth_trunc: Maximum valid depth (in meters).
+        mode: Fusion mode ('min', 'mean', 'real-priority', 'mono-priority').
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     transform = np.load(transform_path)
@@ -153,7 +190,7 @@ def fuse_dataset_depth_maps(
         )
 
         # Fuse
-        fused = fuse_depth_maps(depth_real * depth_scale, depth_proj)
+        fused = fuse_depth_maps(depth_real * depth_scale, depth_proj, mode)
 
         # Save outputs
         png_path = output_dir / f"{rgb_path.stem}.png"
@@ -244,12 +281,15 @@ def main() -> None:
     scene = "lab_scene_f"
     scale = 100
     trunc = 3.0  # Adjust as needed
+    mode = "mono-priority"  # Fusion mode: 'min', 'mean', 'real-priority', 'mono-priority'
 
     rgb_dir = Path(f"datasets/{scene}/rgb")
     depth_real_dir = Path(f"datasets/{scene}/depth_npy")
     depth_mono_dir = Path(f"results/{scene}/d4/depth_npy")
     transform_path = Path(f"results/{scene}/d6/T_d_to_m_frame0000.npy")
-    output_dir = Path(f"results/{scene}/d8/T_d_to_m_fused_{scale}_{trunc}")
+    output_dir = Path(
+        f"results/{scene}/d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
+    )
     intrinsics = load_intrinsics(Path(f"datasets/{scene}/intrinsics.json"))
 
     fuse_dataset_depth_maps(
