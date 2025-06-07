@@ -12,11 +12,13 @@ from pathlib import Path
 
 
 class IntrinsicLoader:
-    """Loads camera intrinsics from JSON file in Open3D format."""
+    """
+    Loads camera intrinsics from a JSON file formatted for Open3D.
+    """
 
     @staticmethod
     def load_from_json(json_path: Path) -> o3d.camera.PinholeCameraIntrinsic:
-        with open(json_path, "r") as f:
+        with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         fx, fy = data["K"][0], data["K"][4]
         cx, cy = data["K"][2], data["K"][5]

@@ -11,62 +11,74 @@ import json
 import numpy as np
 import open3d as o3d
 from pathlib import Path
+from typing import List, Tuple
 from modules.reconstruction.intrinsic_loader import IntrinsicLoader
 from modules.reconstruction.rgbd_loader import RGBDLoader
 
 
 class MultiwayReconstructorOffline:
     """
-    Runs full multiway reconstruction using RGB + depth frames (Numpy format),
-    without relying on ROS 2. Outputs a merged point cloud.
+    Orchestrates full offline multiway reconstruction from RGB-D input folders.
     """
 
     def __init__(
         self,
-        dataset_path: Path,
-        output_path: Path,
-        voxel_size: float = 0.02
+        rgb_dir: Path,
+        depth_dir: Path,
+        intrinsics_json: Path,
+        output_dir: Path,
+        output_pcd: Path,
+        voxel_size: float = 0.02,
+        scale_correction: float = 1.0
     ) -> None:
-        self.dataset_path = dataset_path
-        self.output_path = output_path
+        self.rgb_dir = rgb_dir
+        self.depth_dir = depth_dir
+        self.intrinsics_path = intrinsics_json
+        self.output_dir = output_dir
+        self.output_pcd = output_pcd
         self.voxel_size = voxel_size
+        self.scale_correction = scale_correction
 
-        self.rgb_dir = dataset_path / "rgb"
-        self.depth_dir = dataset_path / "depth_npy"
-        self.intrinsics_path = dataset_path / "intrinsics.json"
-        self.output_pcd = output_path / "reconstruction_sensor.ply"
+        self._validate_paths()
 
-        if not self.dataset_path.exists():
+    def _validate_paths(self) -> None:
+        if not self.rgb_dir.exists():
+            raise FileNotFoundError(f"RGB directory not found: {self.rgb_dir}")
+        if not self.depth_dir.exists():
             raise FileNotFoundError(
-                f"[ERROR] Dataset not found: {self.dataset_path}"
+                f"Depth directory not found: {self.depth_dir}"
             )
-        self.output_path.mkdir(parents=True, exist_ok=True)
+        if not self.intrinsics_path.exists():
+            raise FileNotFoundError(
+                f"Intrinsics file not found: {self.intrinsics_path}"
+            )
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def _pairwise_registration(
         self,
         source: o3d.geometry.PointCloud,
         target: o3d.geometry.PointCloud,
-        max_dist_coarse: float,
-        max_dist_fine: float
-    ) -> tuple[np.ndarray, np.ndarray]:
+        dist_coarse: float,
+        dist_fine: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
         icp_coarse = o3d.pipelines.registration.registration_icp(
-            source, target, max_dist_coarse, np.eye(4),
+            source, target, dist_coarse, np.eye(4),
             o3d.pipelines.registration.TransformationEstimationPointToPlane()
         )
         icp_fine = o3d.pipelines.registration.registration_icp(
-            source, target, max_dist_fine, icp_coarse.transformation,
+            source, target, dist_fine, icp_coarse.transformation,
             o3d.pipelines.registration.TransformationEstimationPointToPlane()
         )
         info = o3d.pipelines.registration.get_information_matrix_from_point_clouds(
-            source, target, max_dist_fine, icp_fine.transformation
+            source, target, dist_fine, icp_fine.transformation
         )
         return icp_fine.transformation, info
 
     def _build_pose_graph(
         self,
-        point_clouds: list[o3d.geometry.PointCloud],
-        max_dist_coarse: float,
-        max_dist_fine: float
+        clouds: List[o3d.geometry.PointCloud],
+        dist_coarse: float,
+        dist_fine: float
     ) -> o3d.pipelines.registration.PoseGraph:
         pose_graph = o3d.pipelines.registration.PoseGraph()
         pose_graph.nodes.append(
@@ -74,11 +86,10 @@ class MultiwayReconstructorOffline:
         )
         odometry = np.identity(4)
 
-        for src_id in range(len(point_clouds)):
-            for tgt_id in range(src_id + 1, len(point_clouds)):
+        for src_id in range(len(clouds)):
+            for tgt_id in range(src_id + 1, len(clouds)):
                 transform, info = self._pairwise_registration(
-                    point_clouds[src_id], point_clouds[tgt_id],
-                    max_dist_coarse, max_dist_fine
+                    clouds[src_id], clouds[tgt_id], dist_coarse, dist_fine
                 )
                 if tgt_id == src_id + 1:
                     odometry = transform @ odometry
@@ -98,61 +109,64 @@ class MultiwayReconstructorOffline:
                             src_id, tgt_id, transform, info, uncertain=True
                         )
                     )
-
         return pose_graph
 
-    def run(self) -> None:
-        print("[INFO] Loading intrinsics and images...")
-        intrinsic = IntrinsicLoader.load_from_json(self.intrinsics_path)
-        point_clouds = RGBDLoader.load_point_clouds(
-            self.rgb_dir, self.depth_dir, intrinsic, self.voxel_size
-        )
+    def _save_metrics(self, cloud: o3d.geometry.PointCloud) -> None:
+        aabb = cloud.get_axis_aligned_bounding_box()
+        volume = aabb.volume()
+        num_points = len(cloud.points)
 
-        print(f"[✓] Saving original reconstruction to: {self.output_path}")
-        o3d.visualization.draw(point_clouds)
+        metrics = {
+            "num_points": num_points,
+            "volume_aabb": volume,
+            "extent_aabb": aabb.get_extent().tolist(),
+            "voxel_size": self.voxel_size,
+            "avg_density": num_points / volume if volume > 0 else 0.0
+        }
+
+        metrics_path = self.output_dir / "reconstruction_metrics.json"
+        with open(metrics_path, "w", encoding="utf-8") as f:
+            json.dump(metrics, f, indent=4)
+        print(f"[✓] Metrics saved to: {metrics_path}")
+
+    def run(self) -> None:
+        print("[INFO] Loading intrinsics and RGB-D data...")
+        intrinsic = IntrinsicLoader.load_from_json(self.intrinsics_path)
+        clouds = RGBDLoader.load_point_clouds(
+            self.rgb_dir,
+            self.depth_dir,
+            intrinsic,
+            self.voxel_size,
+            scale_correction=self.scale_correction
+        )
 
         print("[INFO] Building pose graph...")
-        max_coarse = self.voxel_size * 15
-        max_fine = self.voxel_size * 1.5
-        pose_graph = self._build_pose_graph(point_clouds, max_coarse, max_fine)
+        dist_coarse = self.voxel_size * 15.0
+        dist_fine = self.voxel_size * 1.5
+        pose_graph = self._build_pose_graph(clouds, dist_coarse, dist_fine)
 
-        print("[INFO] Optimizing pose graph...")
-        option = o3d.pipelines.registration.GlobalOptimizationOption(
-            max_correspondence_distance=max_fine,
-            edge_prune_threshold=0.25,
-            reference_node=0
-        )
+        print("[INFO] Optimizing pose graph globally...")
         o3d.pipelines.registration.global_optimization(
             pose_graph,
             o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
             o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),
-            option
+            o3d.pipelines.registration.GlobalOptimizationOption(
+                max_correspondence_distance=dist_fine,
+                edge_prune_threshold=0.25,
+                reference_node=0
+            )
         )
 
-        print("[INFO] Merging aligned point clouds...")
-        for i, pcd in enumerate(point_clouds):
-            pcd.transform(pose_graph.nodes[i].pose)
+        print("[INFO] Transforming and merging point clouds...")
+        for i, cloud in enumerate(clouds):
+            cloud.transform(pose_graph.nodes[i].pose)
 
         merged = o3d.geometry.PointCloud()
-        for pcd in point_clouds:
-            merged += pcd
+        for cloud in clouds:
+            merged += cloud
 
-        print(f"[✓] Saving final reconstruction to: {self.output_pcd}")
-        o3d.io.write_point_cloud(self.output_pcd, merged)
-
-        # Compute and save basic metrics
-        aabb = merged.get_axis_aligned_bounding_box()
-        metrics = {
-            "num_points": len(merged.points),
-            "volume_aabb": aabb.volume(),
-            "extent_aabb": aabb.get_extent().tolist(),  # [x, y, z] extent
-            "voxel_size": self.voxel_size
-        }
-
-        metrics_path = self.output_path / "reconstruction_metrics.json"
-        with open(metrics_path, "w") as f:
-            json.dump(metrics, f, indent=4)
-
-        print(f"[✓] Metrics saved to: {metrics_path}")
+        print(f"[✓] Saving final point cloud to: {self.output_pcd}")
+        o3d.io.write_point_cloud(str(self.output_pcd), merged)
+        self._save_metrics(merged)
 
         o3d.visualization.draw([merged])
