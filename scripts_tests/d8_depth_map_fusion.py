@@ -95,20 +95,21 @@ def fuse_dataset_depth_maps(
     transform_path: Path,
     output_dir: Path,
     intrinsics: o3d.camera.PinholeCameraIntrinsic,
-    depth_scale: float = 5000.0
+    depth_scale: float = 5000.0,
+    depth_trunc: float = 4.0
 ) -> None:
     """
-    Fuses real and monocular depth maps for a dataset using a known
-    transformation.
+    Fuses real and monocular depth maps using a known transformation.
 
     Args:
-        rgb_dir: Directory with RGB images (for geometry consistency).
+        rgb_dir: Directory with RGB images.
         depth_real_dir: Directory with .npy real depth maps.
         depth_mono_dir: Directory with .npy monocular depth maps.
-        transform_path: Path to .npy file with 4x4 matrix.
+        transform_path: Path to 4x4 transformation matrix.
         output_dir: Output directory for fused PNG + NPY files.
         intrinsics: Open3D intrinsics.
-        depth_scale: Scale factor (e.g., 5000 for meters to uint16).
+        depth_scale: Scale factor for uint16 conversion.
+        depth_trunc: Maximum valid depth (in meters).
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     transform = np.load(transform_path)
@@ -130,7 +131,7 @@ def fuse_dataset_depth_maps(
         depth_real = np.load(real_path).astype(np.float32)
         depth_mono = np.load(mono_path).astype(np.float32)
 
-        # Create point cloud from monocular depth
+        # Build point cloud from monocular depth
         depth_img = o3d.geometry.Image(
             (depth_mono * depth_scale).astype(np.uint16)
         )
@@ -142,20 +143,22 @@ def fuse_dataset_depth_maps(
                                                                   intrinsics)
         pcd_mono.transform(transform)
 
-        # Project to real camera space
-        depth_proj = project_point_cloud_to_depth(pcd_mono,
-                                                  intrinsics,
-                                                  depth_scale)
+        # Project to image plane
+        depth_proj = project_point_cloud_to_depth(
+            pcd=pcd_mono,
+            intr=intrinsics,
+            depth_scale=depth_scale,
+            depth_trunc=depth_trunc
+        )
 
-        # Fuse depth maps
+        # Fuse
         fused = fuse_depth_maps(depth_real * depth_scale, depth_proj)
 
-        # Save as PNG
+        # Save outputs
         png_path = output_dir / f"{rgb_path.stem}.png"
-        cv2.imwrite(str(png_path), fused)
-
-        # Save as NPY (in meters)
         npy_path = output_dir / f"{rgb_path.stem}.npy"
+
+        cv2.imwrite(str(png_path), fused)
         np.save(npy_path, fused.astype(np.float32) / depth_scale)
 
         print(f"[✓] Saved fused maps: {png_path.name} | valid pixels: {np.count_nonzero(fused)}")
@@ -166,16 +169,18 @@ def main() -> None:
     Runs fusion for a specific dataset scene.
     """
     scene = "lab_scene_f"
-    scale = 1000
+    scale = 100
+    depth_trunc = 4.0  # Adjust as needed
 
     fuse_dataset_depth_maps(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
         depth_real_dir=Path(f"datasets/{scene}/depth_npy"),
         depth_mono_dir=Path(f"results/{scene}/d4/depth_npy"),
         transform_path=Path(f"results/{scene}/d6/T_d_to_m_frame0000.npy"),
-        output_dir=Path(f"results/{scene}/d8/T_d_to_m__depth_fused_{scale}"),
+        output_dir=Path(f"results/{scene}/d8/T_d_to_m_depth_fused2_{scale}"),
         intrinsics=load_intrinsics(Path(f"datasets/{scene}/intrinsics.json")),
-        depth_scale=scale  # Scale for meters to uint16
+        depth_scale=scale,
+        depth_trunc=depth_trunc
     )
 
 
