@@ -170,3 +170,14 @@ class MultiwayReconstructorOffline:
         self._save_metrics(merged)
 
         o3d.visualization.draw([merged])
+
+        # Save a rendered snapshot of the merged point cloud
+        vis = o3d.visualization.Visualizer()
+        vis.create_window(visible=False)
+        vis.add_geometry(merged)
+        vis.poll_events()
+        vis.update_renderer()
+        snapshot_path = self.output_dir / "reconstruction_snapshot.png"
+        vis.capture_screen_image(str(snapshot_path))
+        vis.destroy_window()
+        print(f"[✓] Snapshot saved to: {snapshot_path}")
