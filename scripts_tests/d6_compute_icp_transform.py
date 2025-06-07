@@ -132,7 +132,7 @@ def run_icp_alignment_for_frame(
     output_dir = results_dir / "d6"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    output_file = output_dir / "T_d_to_m.npy"
+    output_file = output_dir / "T_m_to_d_frame0000.npy"
     transformation = np.linalg.inv(transformation)  # T_m_from_d
     np.save(output_file, transformation)
     print(f"[✓] Transformation saved to: {output_file}")
