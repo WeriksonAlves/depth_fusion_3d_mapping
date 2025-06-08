@@ -19,6 +19,5 @@ __all__ = [
     "fusion",
     "inference",
     "reconstruction",
-    "evaluation",
     "utils"
 ]

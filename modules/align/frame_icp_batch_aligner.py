@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import List, Dict
 
-from frame_icp_aligner import FrameICPAligner
+from modules.align.frame_icp_aligner import FrameICPAligner
 
 
 class FrameICPAlignerBatch:

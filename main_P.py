@@ -125,10 +125,11 @@ def run_fusion_d8(
     scale: int = 100,
     trunc: float = 3.0,
     mode: str = "min",
-    visualize=True) -> None:
+    visualize: bool = True
+) -> None:
     """
     Performs depth map fusion between real and monocular.
-    
+
     Args:
         scene (str): Name of the scene to process.
         scale (int): Scale factor for depth maps.
@@ -160,7 +161,8 @@ def run_fused_reconstruction_d9(
     scale: int = 100,
     trunc: float = 3.0,
     mode: str = "min",
-    voxel_size=0.02) -> None:
+    voxel_size: float = 0.02
+) -> None:
     """
     Reconstructs from fused depth maps.
     """
@@ -178,17 +180,17 @@ def run_fused_reconstruction_d9(
     reconstructor.run()
 
 
-def run_pipeline_sequence(scene: str) -> None:
+def run_pipeline_sequence() -> None:
     """
     Executes a full pipeline step-by-step.
     """
     scene = "lab_scene_r"
     voxel_size = 0.02
-    scaling_factor = 1.0
+    scaling_factor = 0.6
     frame_index = 0
     len_range = 10
     scale = 100
-    trunc = 3.0
+    trunc = 4.0
     mode = "min"
     visualize = True
 
@@ -204,10 +206,10 @@ def run_pipeline_sequence(scene: str) -> None:
     run_monodepth_d4(scene, scaling_factor)
     run_reconstruction_d5(scene, voxel_size)
     run_alignment_d6(scene, frame_index)
-    run_batch_alignment_d6(scene, len_range, voxel_size)
+    # run_batch_alignment_d6(scene, len_range, voxel_size)
     run_fusion_d8(scene, scale, trunc, mode, visualize)
     run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
-    run_compare_d5(scene, offset_apply=True)
+    run_compare_d5(scene, offset_apply=False)
 
 
 if __name__ == "__main__":
