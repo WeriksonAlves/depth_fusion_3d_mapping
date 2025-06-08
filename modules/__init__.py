@@ -8,13 +8,16 @@ This package exposes the core submodules:
 - utils: ROS 2 and Open3D utilities
 """
 
+from modules import align
+from modules import fusion
 from modules import inference
 from modules import reconstruction
-from modules import evaluation
 from modules import utils
 
 __all__ = [
+    "align",
+    "fusion",
     "inference",
     "reconstruction",
-    "evaluation",
     "utils"
+]
