@@ -184,7 +184,7 @@ def run_pipeline_sequence() -> None:
     """
     Executes a full pipeline step-by-step.
     """
-    scene = "lab_scene_r"
+    scene = "lab_scene_l"
     voxel_size = 0.02
     scaling_factor = 0.6
     frame_index = 0
@@ -202,14 +202,14 @@ def run_pipeline_sequence() -> None:
     #     fps=15
     # )
 
-    run_reconstruction_d3(scene, voxel_size)
-    run_monodepth_d4(scene, scaling_factor)
-    run_reconstruction_d5(scene, voxel_size)
-    run_alignment_d6(scene, frame_index)
-    # run_batch_alignment_d6(scene, len_range, voxel_size)
-    run_fusion_d8(scene, scale, trunc, mode, visualize)
-    run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
-    run_compare_d5(scene, offset_apply=False)
+    # run_reconstruction_d3(scene, voxel_size)
+    # run_monodepth_d4(scene, scaling_factor)
+    # run_reconstruction_d5(scene, voxel_size)
+    # run_alignment_d6(scene, frame_index)
+    # # run_batch_alignment_d6(scene, len_range, voxel_size)
+    # run_fusion_d8(scene, scale, trunc, mode, visualize)
+    # run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
+    # run_compare_d5(scene, offset_apply=False)
 
 
 if __name__ == "__main__":
