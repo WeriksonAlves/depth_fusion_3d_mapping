@@ -80,9 +80,9 @@ def main() -> None:
     """
     Example usage: Compare point clouds from D435 vs DepthAnything.
     """
-    scene = "lab_scene_f"
-    path_d435 = Path(f"results/{scene}/d3/reconstruction_sensor.ply")
-    path_mono = Path(f"results/{scene}/d5/reconstruction_estimated.ply")
+    scene = "lab_scene_l"
+    path_d435 = Path(f"results2/{scene}/d3/reconstruction_sensor.ply")
+    path_mono = Path(f"results2/{scene}/d5/final_reconstruction.ply")
 
     comparer = PointCloudComparer()
     comparer.visualize([path_d435, path_mono])
