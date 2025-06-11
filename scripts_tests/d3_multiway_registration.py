@@ -216,7 +216,7 @@ class MultiwayReconstructorOffline:
 # )
 
 def main() -> None:
-    scene = "lab_scene_l"
+    scene = "lab_scene_d"
     dataset = Path(f"datasets/{scene}")
     output = Path(f"results2/{scene}/d3")
 
