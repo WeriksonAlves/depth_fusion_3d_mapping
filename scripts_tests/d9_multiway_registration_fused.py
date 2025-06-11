@@ -249,14 +249,14 @@ class MultiwayReconstructorOffline:
 # )
 
 def main() -> None:
-    scene = "lab_scene_f"
+    scene = "lab_scene_l"
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=Path(f"results/{scene}/d8/fused_depth_Tdm_min_100_3.0"),  # mapas fundidos
+        depth_dir=Path(f"results2/{scene}/d8/fused_depth_Tdm_min_100_3.0"),  # mapas fundidos
         intrinsics_json=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results/{scene}/d9"),
-        output_pcd=Path(f"results/{scene}/d9/reconstruction_fused.ply"),
+        output_dir=Path(f"results2/{scene}/d9"),
+        output_pcd=Path(f"results2/{scene}/d9/reconstruction_fused.ply"),
         voxel_size=0.02,
         scale_correction=1.0  # Ajuste de escala se necessário
     )

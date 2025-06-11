@@ -242,9 +242,9 @@ class DepthBatchInferencer:
 
 
 def main() -> None:
-    scene = "lab_scene_f"
+    scene = "lab_scene_l"
     input_dir = Path(f"datasets/{scene}/rgb")
-    output_dir = Path(f"results/{scene}/estimated")
+    output_dir = Path(f"results2/{scene}/d4")
     checkpoint_dir = Path("checkpoints")
     encoder = "vits"
 

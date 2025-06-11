@@ -238,16 +238,16 @@ class MultiwayReconstructorOffline:
 # )
 
 def main() -> None:
-    scene = "lab_scene_f"
+    scene = "lab_scene_l"
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=Path(f"results/{scene}/d4/depth_npy"),
+        depth_dir=Path(f"results2/{scene}/d4/depth_npy"),
         intrinsics_json=Path(f"datasets/{scene}/intrinsics.json"),
-        output_path=Path(f"results/{scene}/d5"),
-        output_pcd=Path(f"results/{scene}/d5/final_reconstruction.ply"),
+        output_dir=Path(f"results2/{scene}/d5"),
+        output_pcd=Path(f"results2/{scene}/d5/final_reconstruction.ply"),
         voxel_size=0.02,
-        scale_correction=1.0
+        scale_correction=0.8
     )
     reconstructor.run()
 
