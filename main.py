@@ -205,12 +205,7 @@ def run_pipeline_sequence() -> None:
     """
     scene = "lab_scene_d"
     voxel_size = 0.02
-
     len_range = 10
-    scale = 100
-    trunc = 4.0
-    mode = "min"
-    visualize = True
 
     print(f"Running pipeline for scene: {scene}")
 
@@ -238,13 +233,22 @@ def run_pipeline_sequence() -> None:
     #     scale_correction=0.6  # Adjust as needed
     # )
 
-    run_alignment_d6(
-        scene,
-        frame_index=0
-    )
+    # run_alignment_d6(
+    #     scene,
+    #     frame_index=0,
+    #     voxel_size=voxel_size,
+    #     inv_transform=False,
+    # )
 
     # # run_batch_alignment_d6(scene, len_range, voxel_size)
-    # run_fusion_d8(scene, scale, trunc, mode, visualize)
+
+    run_fusion_d8(
+        scene,
+        scale=100,
+        trunc=4.0,
+        mode='min',
+        visualize=True
+    )
     # run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
 
     # run_compare_d5(

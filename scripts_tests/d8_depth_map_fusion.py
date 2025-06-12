@@ -278,17 +278,17 @@ def main() -> None:
     """
     Runs fusion for a specific dataset scene.
     """
-    scene = "lab_scene_l"
+    scene = "lab_scene_d"
     scale = 100
     trunc = 4.0  # Adjust as needed
     mode = "min"  # Fusion mode: 'min', 'mean', 'real-priority', 'mono-priority'
 
     rgb_dir = Path(f"datasets/{scene}/rgb")
     depth_real_dir = Path(f"datasets/{scene}/depth_npy")
-    depth_mono_dir = Path(f"results2/{scene}/d4/depth_npy")
-    transform_path = Path(f"results2/{scene}/d6/T_d_to_m_frame0000.npy")
+    depth_mono_dir = Path(f"comparation/results_test/{scene}/d4/depth_npy")
+    transform_path = Path(f"comparation/results_test/{scene}/d6/T_d_to_m_frame0000.npy")
     output_dir = Path(
-        f"results2/{scene}/d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
+        f"comparation/results_test/{scene}/d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
     )
     intrinsics = load_intrinsics(Path(f"datasets/{scene}/intrinsics.json"))
 
