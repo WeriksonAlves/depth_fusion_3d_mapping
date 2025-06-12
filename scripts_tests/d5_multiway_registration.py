@@ -200,6 +200,8 @@ class MultiwayReconstructorOffline:
         print("[INFO] Building pose graph...")
         dist_coarse = self.voxel_size * 15.0
         dist_fine = self.voxel_size * 1.5
+        for pcd in clouds:
+            pcd.rotate(pcd.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
         pose_graph = self._build_pose_graph(clouds, dist_coarse, dist_fine)
 
         print("[INFO] Optimizing pose graph globally...")
@@ -238,16 +240,16 @@ class MultiwayReconstructorOffline:
 # )
 
 def main() -> None:
-    scene = "lab_scene_l"
+    scene = "lab_scene_d"
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=Path(f"results2/{scene}/d4/depth_npy"),
+        depth_dir=Path(f"comparation/results_test/{scene}/d4/depth_npy"),
         intrinsics_json=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results2/{scene}/d5"),
-        output_pcd=Path(f"results2/{scene}/d5/final_reconstruction.ply"),
+        output_dir=Path(f"comparation/results_test/{scene}/d5"),
+        output_pcd=Path(f"comparation/results_test/{scene}/d5/final_reconstruction.ply"),
         voxel_size=0.02,
-        scale_correction=0.8
+        scale_correction=1.0
     )
     reconstructor.run()
 

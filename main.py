@@ -11,9 +11,11 @@ from modules.align.frame_icp_batch_aligner import FrameICPAlignerBatch
 from modules.fusion.depth_fusion_processor import DepthFusionProcessor
 
 
-def run_capture_d12(output_path,
-                    max_frames=60,
-                    fps=15) -> None:
+def run_capture_d12(
+    output_path,
+    max_frames=60,
+    fps=15
+) -> None:
     """
     Captures frames using RealSense and saves RGB, depth, and intrinsics.
     """
@@ -26,7 +28,10 @@ def run_capture_d12(output_path,
     recorder.capture()
 
 
-def run_reconstruction_d3(scene: str, voxel_size=0.02) -> None:
+def run_reconstruction_d3(
+    scene: str,
+    voxel_size=0.02
+) -> None:
     """
     Runs reconstruction using RealSense depth.
     """
@@ -41,7 +46,10 @@ def run_reconstruction_d3(scene: str, voxel_size=0.02) -> None:
     reconstructor.run()
 
 
-def run_monodepth_d4(scene: str, scaling_factor=1.0) -> None:
+def run_monodepth_d4(
+    scene: str,
+    scaling_factor=1.0
+) -> None:
     """
     Performs monocular depth inference using DepthAnythingV2.
     """
@@ -60,7 +68,11 @@ def run_monodepth_d4(scene: str, scaling_factor=1.0) -> None:
     inferencer.run()
 
 
-def run_reconstruction_d5(scene: str, voxel_size=0.02) -> None:
+def run_reconstruction_d5(
+    scene: str,
+    voxel_size=0.02,
+    scale_correction=1.0
+) -> None:
     """
     Runs reconstruction using monocular depth estimates.
     """
@@ -71,12 +83,16 @@ def run_reconstruction_d5(scene: str, voxel_size=0.02) -> None:
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
         output_dir=Path(f"comparation/results/{scene}/d5"),
         output_pcd_path=Path(f"comparation/results/{scene}/d5/reconstruction_est.ply"),
-        voxel_size=voxel_size
+        voxel_size=voxel_size,
+        scale_correction=scale_correction
     )
     reconstructor.run()
 
 
-def run_compare_d5(scene: str, offset_apply: bool = False) -> None:
+def run_compare_d5(
+    scene: str,
+    offset_apply: bool = False
+) -> None:
     """
     Compares point clouds from sensor vs monocular estimation.
     """
@@ -181,7 +197,6 @@ def run_pipeline_sequence() -> None:
     """
     scene = "lab_scene_d"
     voxel_size = 0.02
-    scaling_factor = 0.6
     frame_index = 0
     len_range = 10
     scale = 100
@@ -199,14 +214,35 @@ def run_pipeline_sequence() -> None:
     #     fps=15
     # )
 
-    # run_reconstruction_d3(scene, voxel_size)
-    run_monodepth_d4(scene, scaling_factor)
-    # run_reconstruction_d5(scene, voxel_size)
-    # run_alignment_d6(scene, frame_index)
+    # run_reconstruction_d3(
+    #     scene,
+    #     voxel_size
+    # )
+
+    # run_monodepth_d4(
+    #     scene,
+    #     scaling_factor=1.0
+    # )
+
+    # run_reconstruction_d5(
+    #     scene,
+    #     voxel_size,
+    #     scale_correction=0.6  # Adjust as needed
+    # )
+
+    run_alignment_d6(
+        scene,
+        frame_index
+    )
+
     # # run_batch_alignment_d6(scene, len_range, voxel_size)
     # run_fusion_d8(scene, scale, trunc, mode, visualize)
     # run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
-    # run_compare_d5(scene, offset_apply=False)
+
+    # run_compare_d5(
+    #     scene,
+    #     offset_apply=False
+    # )
 
 
 if __name__ == "__main__":
