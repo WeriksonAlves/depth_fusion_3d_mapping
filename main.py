@@ -34,8 +34,8 @@ def run_reconstruction_d3(scene: str, voxel_size=0.02) -> None:
         rgb_dir=Path(f"datasets/{scene}/rgb"),
         depth_dir=Path(f"datasets/{scene}/depth_npy"),
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results/{scene}/d3"),
-        output_pcd_path=Path(f"results/{scene}/d3/reconstruction_sensor.ply"),
+        output_dir=Path(f"comparation/results/{scene}/d3"),
+        output_pcd_path=Path(f"comparation/results/{scene}/d3/reconstruction_sensor.ply"),
         voxel_size=voxel_size
     )
     reconstructor.run()
@@ -195,6 +195,8 @@ def run_pipeline_sequence() -> None:
     visualize = True
 
     print(f"Running pipeline for scene: {scene}")
+
+    # modules/reconstruction/rgbd_loader.py # Read .ply
 
     # run_capture_d12(
     #     output_path=Path(f"datasets/{scene}"),

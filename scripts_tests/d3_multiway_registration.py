@@ -158,6 +158,9 @@ class MultiwayReconstructorOffline:
         )
 
         print(f"[✓] Saving original reconstruction to: {self.output_path}")
+
+        for pcd in point_clouds:
+            pcd.rotate(pcd.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
         o3d.visualization.draw(point_clouds)
 
         print("[INFO] Building pose graph...")
@@ -218,7 +221,7 @@ class MultiwayReconstructorOffline:
 def main() -> None:
     scene = "lab_scene_d"
     dataset = Path(f"datasets/{scene}")
-    output = Path(f"results2/{scene}/d3")
+    output = Path(f"comparation/results_test/{scene}/d3")
 
     reconstructor = MultiwayReconstructorOffline(
         dataset_path=dataset,
