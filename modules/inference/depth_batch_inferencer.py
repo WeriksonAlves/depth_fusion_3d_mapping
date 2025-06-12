@@ -46,19 +46,26 @@ class DepthBatchInferencer:
         self.input_dir = input_dir
         self.output_npy_dir = output_path / "depth_npy"
         self.output_png_dir = output_path / "depth_png"
+        self.checkpoint_dir = checkpoint_dir
         self.device = device
         self.scaling_factor = scaling_factor
 
+        self._validate_paths()
+
         self.estimator = DepthAnythingV2Estimator(
             encoder=encoder,
-            checkpoint_dir=str(checkpoint_dir),
+            checkpoint_dir=str(self.checkpoint_dir),
             device=self.device
         )
 
-        self._create_output_dirs()
-
-    def _create_output_dirs(self) -> None:
-        """Creates output directories if they do not exist."""
+    def _validate_paths(self) -> None:
+        """Checks for required directories and files."""
+        for path in [
+            self.input_dir,
+            self.checkpoint_dir
+        ]:
+            if not path.exists():
+                raise FileNotFoundError(f"Missing path: {path}")
         self.output_npy_dir.mkdir(parents=True, exist_ok=True)
         self.output_png_dir.mkdir(parents=True, exist_ok=True)
 
@@ -70,10 +77,6 @@ class DepthBatchInferencer:
             List[Path]: Sorted list of image paths.
         """
         image_paths = sorted(self.input_dir.glob("*.png"))
-        if not image_paths:
-            raise FileNotFoundError(
-                f"No .png images found in: {self.input_dir}"
-            )
         return image_paths
 
     def _save_depth_outputs(self, img_path: Path, depth: np.ndarray) -> None:
