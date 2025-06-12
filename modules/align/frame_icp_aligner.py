@@ -88,7 +88,8 @@ class FrameICPAligner:
             target=tgt_down,
             max_correspondence_distance=self._voxel_size * 2.5,
             init=np.eye(4),
-            estimation_method=o3d.pipelines.registration.TransformationEstimationPointToPlane()
+            estimation_method=o3d.pipelines.registration.
+            TransformationEstimationPointToPlane()
         )
 
         print(f"[✓] ICP Fitness: {result.fitness:.4f}")
@@ -140,12 +141,12 @@ class FrameICPAligner:
             json.dump(metrics, f, indent=4)
 
         print(
-            f"[✓] Transformation saved to:"
+            f"[✓] Transformation saved to: "
             f"{out_dir/'T_d_to_m_frame{self._frame_index:04d}.npy'}"
         )
         print(f"[✓] ICP metrics saved to: {out_dir/'icp_metrics.json'}")
 
-    def run(self) -> None:
+    def run(self, inv_transform: bool = False) -> None:
         """Runs the full ICP alignment pipeline for a single frame."""
         print("[INFO] Creating point clouds from RGB + depth...")
         pcd_real = self._create_point_cloud(self._real_depth_path)
@@ -153,6 +154,9 @@ class FrameICPAligner:
 
         print("[INFO] Running ICP alignment...")
         transform, result = self._compute_icp(pcd_mono, pcd_real)
+
+        if inv_transform:  # If you want to save the inverse transformation
+            transform = np.linalg.inv(transform)
 
         print("[INFO] Saving results...")
         self._save_results(transform, result, pcd_mono, pcd_real)

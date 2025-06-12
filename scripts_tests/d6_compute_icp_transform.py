@@ -105,7 +105,7 @@ def run_icp_alignment_for_frame(
     and saves the transformation matrix to disk.
     """
     dataset_dir = Path(f"datasets/{scene}")
-    results_dir = Path(f"results2/{scene}")
+    results_dir = Path(f"comparation/results_test/{scene}")
     frame_name = f"frame_{frame_index:04d}"
 
     rgb_path = dataset_dir / "rgb" / f"{frame_name}.png"
@@ -157,7 +157,7 @@ def main() -> None:
     """
     Example: aligns frame_0000 from scene 'lab_scene_f'.
     """
-    run_icp_alignment_for_frame(scene="lab_scene_l", frame_index=0)
+    run_icp_alignment_for_frame(scene="lab_scene_d", frame_index=0)
 
 
 if __name__ == "__main__":

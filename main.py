@@ -103,16 +103,24 @@ def run_compare_d5(
     comparer.visualize([path_d435, path_mono])
 
 
-def run_alignment_d6(scene: str, frame_index: int = 0) -> None:
+def run_alignment_d6(
+    scene: str,
+    frame_index: int = 0,
+    voxel_size=0.02,
+    depth_scale=1000.0,
+    inv_transform: bool = False
+) -> None:
     """
     Runs ICP alignment for a single frame.
     """
     aligner = FrameICPAligner(
         dataset_dir=Path(f"datasets/{scene}"),
         results_dir=Path(f"comparation/results/{scene}"),
-        frame_index=frame_index
+        frame_index=frame_index,
+        voxel_size=voxel_size,
+        depth_scale=depth_scale
     )
-    aligner.run()
+    aligner.run(inv_transform=inv_transform)
 
 
 def run_batch_alignment_d6(scene: str,
@@ -197,7 +205,7 @@ def run_pipeline_sequence() -> None:
     """
     scene = "lab_scene_d"
     voxel_size = 0.02
-    frame_index = 0
+
     len_range = 10
     scale = 100
     trunc = 4.0
@@ -232,7 +240,7 @@ def run_pipeline_sequence() -> None:
 
     run_alignment_d6(
         scene,
-        frame_index
+        frame_index=0
     )
 
     # # run_batch_alignment_d6(scene, len_range, voxel_size)
