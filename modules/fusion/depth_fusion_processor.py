@@ -16,6 +16,7 @@ import open3d as o3d
 import cv2
 
 from modules.reconstruction.intrinsic_loader import IntrinsicLoader
+from modules.reconstruction.rgbd_loader import RGBDLoader
 
 
 class DepthFusionProcessor:
@@ -157,15 +158,6 @@ class DepthFusionProcessor:
         error_map_path = self._output_dir / f"{name}_error_abs.npy"
         np.save(error_map_path, error_abs)
 
-        # Optional visualization
-        if self._visualize:
-            self._visualize_comparison(
-                name=name,
-                depth_real=real * self._depth_scale,
-                projected=projected,
-                fused=fused
-            )
-
         # Return statistics
         return {
             "frame": name,
@@ -236,7 +228,15 @@ class DepthFusionProcessor:
         fused_col = cv2.applyColorMap(fused_vis, cv2.COLORMAP_JET)
         diff_col = cv2.applyColorMap(diff_vis, cv2.COLORMAP_HOT)
 
-        grid = np.hstack([real_col, proj_col, fused_col, diff_col])
+        # Resize all depth maps to match RGB image shape
+        target_shape = (depth_real.shape[1], depth_real.shape[0])
+        real_col = cv2.resize(real_col, target_shape)
+        proj_col = cv2.resize(proj_col, target_shape)
+        fused_col = cv2.resize(fused_col, target_shape)
+
+        top = np.hstack([real_col, proj_col])
+        bottom = np.hstack([fused_col, diff_col])
+        grid = np.vstack([top, bottom])
 
         save_path = self._output_dir / f"{name}_comparison.png"
         cv2.imwrite(str(save_path), grid)

@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 
 from modules.utils.realsense_recorder import RealSenseRecorder
 from modules.reconstruction.multiway_reconstructor_offline import (
@@ -6,8 +7,8 @@ from modules.reconstruction.multiway_reconstructor_offline import (
 )
 from modules.inference.depth_batch_inferencer import DepthBatchInferencer
 from modules.utils.point_cloud_comparer import PointCloudComparer
-from modules.align.frame_icp_aligner import FrameICPAligner
-from modules.align.frame_icp_batch_aligner import FrameICPAlignerBatch
+from modules.align.frame_icp_aligner import FrameICPAligner, FrameICPAlignerBatch
+# from modules.align.frame_icp_batch_aligner import FrameICPAlignerBatch
 from modules.fusion.depth_fusion_processor import DepthFusionProcessor
 
 
@@ -103,38 +104,20 @@ def run_compare_d5(
     comparer.visualize([path_d435, path_mono])
 
 
-def run_alignment_d6(
-    scene: str,
-    frame_index: int = 0,
-    voxel_size=0.02,
-    depth_scale=1000.0,
-    inv_transform: bool = False
-) -> None:
-    """
-    Runs ICP alignment for a single frame.
-    """
-    aligner = FrameICPAligner(
-        dataset_dir=Path(f"datasets/{scene}"),
-        results_dir=Path(f"comparation/results/{scene}"),
-        frame_index=frame_index,
-        voxel_size=voxel_size,
-        depth_scale=depth_scale
-    )
-    aligner.run(inv_transform=inv_transform)
-
-
 def run_batch_alignment_d6(scene: str,
-                           len_range: int = 10,
                            voxel_size: float = 0.02,
                            depth_scale=1000.0) -> None:
     """
     Runs ICP alignment in batch for multiple frames.
     """
     batch = FrameICPAlignerBatch(
-        scene_name=scene,
-        frame_indices=list(range(len_range)),
+        rgb_dir=Path(f"datasets/{scene}/rgb"),
+        depth_sensor_dir=Path(f"datasets/{scene}/depth_npy"),
+        depth_estimation_dir=Path(f"comparation/results/{scene}/d4/depth_npy"),
+        intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
+        output_dir=Path(f"comparation/results/{scene}/d6"),
         voxel_size=voxel_size,
-        depth_scale=depth_scale
+        depth_scale=depth_scale,
     )
     batch.run()
 
@@ -233,22 +216,19 @@ def run_pipeline_sequence() -> None:
     #     scale_correction=0.6  # Adjust as needed
     # )
 
-    # run_alignment_d6(
-    #     scene,
-    #     frame_index=0,
-    #     voxel_size=voxel_size,
-    #     inv_transform=False,
-    # )
-
-    # # run_batch_alignment_d6(scene, len_range, voxel_size)
-
-    run_fusion_d8(
+    run_batch_alignment_d6(
         scene,
-        scale=100,
-        trunc=4.0,
-        mode='min',
-        visualize=True
+        voxel_size=voxel_size,
+        depth_scale=1000.0
     )
+
+    # run_fusion_d8(
+    #     scene,
+    #     scale=100,
+    #     trunc=4.0,
+    #     mode='min',
+    #     visualize=True
+    # )
     # run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
 
     # run_compare_d5(
