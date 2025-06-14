@@ -1,5 +1,4 @@
 from pathlib import Path
-import numpy as np
 
 from modules.utils.realsense_recorder import RealSenseRecorder
 from modules.reconstruction.multiway_reconstructor_offline import (
@@ -7,8 +6,7 @@ from modules.reconstruction.multiway_reconstructor_offline import (
 )
 from modules.inference.depth_batch_inferencer import DepthBatchInferencer
 from modules.utils.point_cloud_comparer import PointCloudComparer
-from modules.align.frame_icp_aligner import FrameICPAligner, FrameICPAlignerBatch
-# from modules.align.frame_icp_batch_aligner import FrameICPAlignerBatch
+from modules.align.frame_icp_aligner import FrameICPAlignerBatch
 from modules.fusion.depth_fusion_processor import DepthFusionProcessor
 
 
@@ -124,35 +122,27 @@ def run_batch_alignment_d6(scene: str,
 
 def run_fusion_d8(
     scene: str,
-    scale: int = 100,
+    scale: int = 1000,
     trunc: float = 3.0,
     mode: str = "min",
     visualize: bool = True
 ) -> None:
     """
     Performs depth map fusion between real and monocular.
-
-    Args:
-        scene (str): Name of the scene to process.
-        scale (int): Scale factor for depth maps.
-        trunc (float): Truncation value for depth maps.
-        mode (str): Fusion mode, e.g., "min", "mean", "real-priority" and
-            "mono-priority".
     """
     base = Path(f"datasets/{scene}")
     results = Path(f"comparation/results/{scene}")
-    output = results / f"d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
+    output = results / "d8/fused_depth"
 
     processor = DepthFusionProcessor(
         rgb_dir=base / "rgb",
         depth_real_dir=base / "depth_npy",
         depth_mono_dir=results / "d4/depth_npy",
-        transform_path=results / "d6/T_d_to_m_frame0000.npy",
+        transform_path=results / "d6/full_transformations.npy",
         intrinsics_path=base / "intrinsics.json",
         output_dir=output,
         depth_scale=scale,
         depth_trunc=trunc,
-        mode=mode,
         visualize=visualize
     )
     processor.run()
@@ -169,7 +159,7 @@ def run_fused_reconstruction_d9(
     Reconstructs from fused depth maps.
     """
     results = Path(f"comparation/results/{scene}")
-    output = results / f"d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
+    output = results / "d8/fused_depth"
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
@@ -188,7 +178,6 @@ def run_pipeline_sequence() -> None:
     """
     scene = "lab_scene_d"
     voxel_size = 0.02
-    len_range = 10
 
     print(f"Running pipeline for scene: {scene}")
 
@@ -216,20 +205,24 @@ def run_pipeline_sequence() -> None:
     #     scale_correction=0.6  # Adjust as needed
     # )
 
-    run_batch_alignment_d6(
-        scene,
-        voxel_size=voxel_size,
-        depth_scale=1000.0
-    )
+    # run_batch_alignment_d6(
+    #     scene,
+    #     voxel_size=voxel_size,
+    #     depth_scale=1000.0
+    # )
 
     # run_fusion_d8(
     #     scene,
-    #     scale=100,
+    #     scale=1000,
     #     trunc=4.0,
     #     mode='min',
     #     visualize=True
     # )
-    # run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
+
+    run_fused_reconstruction_d9(
+        scene,
+        voxel_size
+    )
 
     # run_compare_d5(
     #     scene,
