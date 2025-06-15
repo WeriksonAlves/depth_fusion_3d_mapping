@@ -109,8 +109,8 @@ class DepthFusionProcessor:
         real_mean = depth_real.mean()
         real_std = depth_real.std()
 
-        # mask = mask_real & mask_estimated
-        mask = mask_real
+        mask = mask_real & mask_estimated
+        # mask = mask_real
 
         fused = np.zeros_like(depth_real, dtype=np.float32)
         fused[mask] = (

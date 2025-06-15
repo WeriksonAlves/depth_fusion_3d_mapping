@@ -99,8 +99,7 @@ def run_compare_d5(
 
 
 def run_batch_alignment_d6(scene: str,
-                           voxel_size: float = 0.02,
-                           depth_scale=1000.0) -> None:
+                           voxel_size: float = 0.02) -> None:
     """
     Runs ICP alignment in batch for multiple frames.
     """
@@ -120,13 +119,7 @@ def run_batch_alignment_d6(scene: str,
     batch.run(scale)
 
 
-def run_fusion_d8(
-    scene: str,
-    scale: int = 1000,
-    trunc: float = 3.0,
-    mode: str = "min",
-    visualize: bool = True
-) -> None:
+def run_fusion_d8(scene: str) -> None:
     """
     Performs depth map fusion between real and monocular.
     """
@@ -135,9 +128,9 @@ def run_fusion_d8(
     processor = DepthFusionProcessor(
         depth_real_dir=Path(f"datasets/{scene}/depth_npy"),
         depth_estimated_dir=results / "d4/depth_npy",
-        output_dir=results / "d8/test_square",
+        output_dir=results / "d8/both",
     )
-    processor.run(1)
+    processor.run(0)
 
 
 def run_fused_reconstruction_d9(
@@ -182,26 +175,16 @@ def run_pipeline_sequence() -> None:
     # )
     # run_reconstruction_d3(scene, voxel_size)
 
-    run_monodepth_d4(scene)
+    # run_monodepth_d4(scene)
     # run_reconstruction_d5(
     #     scene,
     #     voxel_size,
     #     scale_correction=1  # Adjust as needed
     # )
 
-    # run_batch_alignment_d6(
-    #     scene,
-    #     voxel_size=voxel_size,
-    #     depth_scale=1000.0
-    # )
+    # run_batch_alignment_d6(scene, voxel_size=voxel_size)
 
-    # run_fusion_d8(
-    #     scene,
-    #     scale=1000,
-    #     trunc=4.0,
-    #     mode='min',
-    #     visualize=True
-    # )
+    run_fusion_d8(scene)
 
     # run_fused_reconstruction_d9(
     #     scene,
