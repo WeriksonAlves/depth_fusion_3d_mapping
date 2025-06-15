@@ -110,18 +110,33 @@ class DepthAnythingV2Estimator:
 
         return model.to(self.device).eval()
 
-    def infer_depth(self, rgb_image: np.ndarray) -> np.ndarray:
+    def normalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
+        """
+        Normalizes the depth map to a range of 0-255.
+
+        Args:
+            depth (np.ndarray): Depth map to normalize.
+
+        Returns:
+            np.ndarray: Normalized depth map.
+        """
+        aux_1 = depth - depth.min()
+        aux_2 = depth.max() - depth.min()
+        normalized = (aux_1) / (aux_2) * 255.0
+        return normalized.astype(np.uint8)
+
+    def infer_depth(
+        self,
+        rgb_image: np.ndarray,
+        input_size: int = 518
+    ) -> np.ndarray:
         """
         Runs depth inference from a single RGB image.
 
         Args:
             rgb_image (np.ndarray): RGB image with shape (H, W, 3).
-
         Returns:
-            np.ndarray: Depth map as a 2D NumPy array.
+            np.ndarray: Estimated depth map with shape (H, W).
         """
-        depth = self.model.infer_image(rgb_image)
-
-        if isinstance(depth, torch.Tensor):
-            return depth.cpu().numpy()
+        depth = self.model.infer_image(rgb_image, input_size)
         return depth
