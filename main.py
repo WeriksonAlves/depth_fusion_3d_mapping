@@ -45,10 +45,7 @@ def run_reconstruction_d3(
     reconstructor.run()
 
 
-def run_monodepth_d4(
-    scene: str,
-    scaling_factor=1.0
-) -> None:
+def run_monodepth_d4(scene: str) -> None:
     """
     Performs monocular depth inference using DepthAnythingV2.
     """
@@ -58,11 +55,10 @@ def run_monodepth_d4(
     checkpoint_dir = Path("checkpoints")
 
     inferencer = DepthBatchInferencer(
-        input_dir=input_dir,
+        rgb_dir=input_dir,
         output_path=output_dir,
         encoder="vits",
         checkpoint_dir=checkpoint_dir,
-        scaling_factor=scaling_factor
     )
     inferencer.run()
 
@@ -99,7 +95,7 @@ def run_compare_d5(
     path_mono = Path(f"comparation/results/{scene}/d5/reconstruction_est.ply")
 
     comparer = PointCloudComparer(offset_apply=offset_apply)
-    comparer.visualize([path_d435, path_mono])
+    comparer.run([path_mono, path_d435], mode=0)
 
 
 def run_batch_alignment_d6(scene: str,
@@ -115,9 +111,13 @@ def run_batch_alignment_d6(scene: str,
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
         output_dir=Path(f"comparation/results/{scene}/d6"),
         voxel_size=voxel_size,
-        depth_scale=depth_scale,
     )
-    batch.run()
+    scale, _ = batch.estimate_scale_from_depth_maps(
+        max_samples=50000,
+        min_depth=0.01,
+        max_depth=5.0
+    )
+    batch.run(scale)
 
 
 def run_fusion_d8(
@@ -130,22 +130,14 @@ def run_fusion_d8(
     """
     Performs depth map fusion between real and monocular.
     """
-    base = Path(f"datasets/{scene}")
-    results = Path(f"comparation/results/{scene}")
-    output = results / "d8/fused_depth"
 
+    results = Path(f"comparation/results/{scene}")
     processor = DepthFusionProcessor(
-        rgb_dir=base / "rgb",
-        depth_real_dir=base / "depth_npy",
-        depth_mono_dir=results / "d4/depth_npy",
-        transform_path=results / "d6/full_transformations.npy",
-        intrinsics_path=base / "intrinsics.json",
-        output_dir=output,
-        depth_scale=scale,
-        depth_trunc=trunc,
-        visualize=visualize
+        depth_real_dir=Path(f"datasets/{scene}/depth_npy"),
+        depth_estimated_dir=results / "d4/depth_npy",
+        output_dir=results / "d8/test_square",
     )
-    processor.run()
+    processor.run(1)
 
 
 def run_fused_reconstruction_d9(
@@ -165,7 +157,7 @@ def run_fused_reconstruction_d9(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
         depth_dir=output,
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"comparation/results/{scene}/d9"),
+        output_dir=Path(f"comparation/results/{scene}/d9_2"),
         output_pcd_path=Path(f"comparation/results/{scene}/d9/reconstruction_fused.ply"),
         voxel_size=voxel_size
     )
@@ -188,21 +180,13 @@ def run_pipeline_sequence() -> None:
     #     max_frames=60,
     #     fps=15
     # )
+    # run_reconstruction_d3(scene, voxel_size)
 
-    # run_reconstruction_d3(
-    #     scene,
-    #     voxel_size
-    # )
-
-    # run_monodepth_d4(
-    #     scene,
-    #     scaling_factor=1.0
-    # )
-
+    # run_monodepth_d4(scene)
     # run_reconstruction_d5(
     #     scene,
     #     voxel_size,
-    #     scale_correction=0.6  # Adjust as needed
+    #     scale_correction=1  # Adjust as needed
     # )
 
     # run_batch_alignment_d6(
@@ -211,18 +195,18 @@ def run_pipeline_sequence() -> None:
     #     depth_scale=1000.0
     # )
 
-    # run_fusion_d8(
-    #     scene,
-    #     scale=1000,
-    #     trunc=4.0,
-    #     mode='min',
-    #     visualize=True
-    # )
-
-    run_fused_reconstruction_d9(
+    run_fusion_d8(
         scene,
-        voxel_size
+        scale=1000,
+        trunc=4.0,
+        mode='min',
+        visualize=True
     )
+
+    # run_fused_reconstruction_d9(
+    #     scene,
+    #     voxel_size
+    # )
 
     # run_compare_d5(
     #     scene,
