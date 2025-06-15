@@ -9,7 +9,7 @@ import json
 import cv2
 from tqdm import tqdm
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 import numpy as np
 
 from modules.inference.depth_estimator import DepthAnythingV2Estimator
@@ -25,30 +25,27 @@ class DepthBatchInferencer:
 
     def __init__(
         self,
-        input_dir: Path,
+        rgb_dir: Path,
         output_path: Path,
         encoder: str = "vits",
         checkpoint_dir: Path = Path("checkpoints"),
         device: str = "cuda",
-        scaling_factor: Optional[float] = None
     ) -> None:
         """
         Initializes the depth estimator and output directories.
 
         Args:
-            input_dir (Path): Directory containing RGB .png images.
+            rgb_dir (Path): Directory containing RGB .png images.
             output_path (Path): Directory where output files will be saved.
             encoder (str): Model encoder type (e.g., 'vits', 'vitb').
             checkpoint_dir (Path): Directory containing model weights.
             device (str): Inference device ('cuda' or 'cpu').
-            scaling_factor (float, optional): Optional depth scaling factor.
         """
-        self.input_dir = input_dir
+        self.rgb_dir = rgb_dir
         self.output_npy_dir = output_path / "depth_npy"
         self.output_png_dir = output_path / "depth_png"
         self.checkpoint_dir = checkpoint_dir
         self.device = device
-        self.scaling_factor = scaling_factor
 
         self._validate_paths()
 
@@ -61,7 +58,7 @@ class DepthBatchInferencer:
     def _validate_paths(self) -> None:
         """Checks for required directories and files."""
         for path in [
-            self.input_dir,
+            self.rgb_dir,
             self.checkpoint_dir
         ]:
             if not path.exists():
@@ -76,28 +73,30 @@ class DepthBatchInferencer:
         Returns:
             List[Path]: Sorted list of image paths.
         """
-        image_paths = sorted(self.input_dir.glob("*.png"))
+        image_paths = sorted(self.rgb_dir.glob("*.png"))
         return image_paths
 
-    def _save_depth_outputs(self, img_path: Path, depth: np.ndarray) -> None:
+    def _save_depth_outputs(
+        self,
+        img_path: Path,
+        depth_m: np.ndarray,
+        depth_norm_png: np.ndarray
+    ) -> None:
         """
         Saves the raw and visualized depth maps.
 
         Args:
             img_path (Path): Path of the original RGB image.
-            depth (np.ndarray): Estimated depth map.
+            depth_m (np.ndarray): Raw depth map in meters.
+            depth_norm_png (np.ndarray): Normalized depth map for
+                visualization.
         """
-        if self.scaling_factor:
-            depth *= self.scaling_factor
 
         npy_path = self.output_npy_dir / img_path.with_suffix(".npy").name
-        np.save(npy_path, depth)
-
-        depth_scaled = (depth * 255.0 / np.max(depth)).astype(np.uint8)
-        depth_colored = cv2.applyColorMap(depth_scaled, cv2.COLORMAP_JET)
+        np.save(npy_path, depth_m)
 
         png_path = self.output_png_dir / img_path.with_suffix(".png").name
-        cv2.imwrite(str(png_path), depth_colored)
+        cv2.imwrite(str(png_path), depth_norm_png)
 
     def _process_single_image(self, img_path: Path) -> None:
         """
@@ -111,8 +110,9 @@ class DepthBatchInferencer:
             print(f"[Warning] Failed to load image: {img_path}")
             return
 
-        depth = self.estimator.infer_depth(image)
-        self._save_depth_outputs(img_path, depth)
+        depth_m = self.estimator.infer_depth(image)
+        depth_norm_png = self.estimator.normalize_png_depth(depth_m)
+        self._save_depth_outputs(img_path, depth_m, depth_norm_png)
 
     def _generate_summary(self, num_input: int) -> None:
         """
