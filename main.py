@@ -38,8 +38,8 @@ def run_reconstruction_d3(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
         depth_dir=Path(f"datasets/{scene}/depth_npy"),
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"comparation/results/{scene}/d3"),
-        output_pcd_path=Path(f"comparation/results/{scene}/d3/reconstruction_sensor.ply"),
+        output_dir=Path(f"results_new/{scene}/d3"),
+        output_pcd_path=Path(f"results_new/{scene}/d3/reconstruction_sensor.ply"),
         voxel_size=voxel_size
     )
     reconstructor.run()
@@ -51,7 +51,7 @@ def run_monodepth_d4(scene: str) -> None:
     """
 
     input_dir = Path(f"datasets/{scene}/rgb")
-    output_dir = Path(f"comparation/results/{scene}/d4")
+    output_dir = Path(f"results_new/{scene}/d4")
     checkpoint_dir = Path("checkpoints")
 
     inferencer = DepthBatchInferencer(
@@ -74,10 +74,10 @@ def run_reconstruction_d5(
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=Path(f"comparation/results/{scene}/d4/depth_npy"),
+        depth_dir=Path(f"results_new/{scene}/d4/depth_npy"),
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"comparation/results/{scene}/d5"),
-        output_pcd_path=Path(f"comparation/results/{scene}/d5/reconstruction_est.ply"),
+        output_dir=Path(f"results_new/{scene}/d5"),
+        output_pcd_path=Path(f"results_new/{scene}/d5/reconstruction_est.ply"),
         voxel_size=voxel_size,
         scale_correction=scale_correction
     )
@@ -91,8 +91,8 @@ def run_compare_d5(
     """
     Compares point clouds from sensor vs monocular estimation.
     """
-    path_d435 = Path(f"comparation/results/{scene}/d3/reconstruction_sensor.ply")
-    path_mono = Path(f"comparation/results/{scene}/d5/reconstruction_est.ply")
+    path_d435 = Path(f"results_new/{scene}/d3/reconstruction_sensor.ply")
+    path_mono = Path(f"results_new/{scene}/d5/reconstruction_est.ply")
 
     comparer = PointCloudComparer(offset_apply=offset_apply)
     comparer.run([path_mono, path_d435], mode=0)
@@ -107,9 +107,9 @@ def run_batch_alignment_d6(scene: str,
     batch = FrameICPAlignerBatch(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
         depth_sensor_dir=Path(f"datasets/{scene}/depth_npy"),
-        depth_estimation_dir=Path(f"comparation/results/{scene}/d4/depth_npy"),
+        depth_estimation_dir=Path(f"results_new/{scene}/d4/depth_npy"),
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"comparation/results/{scene}/d6"),
+        output_dir=Path(f"results_new/{scene}/d6"),
         voxel_size=voxel_size,
     )
     scale, _ = batch.estimate_scale_from_depth_maps(
@@ -131,7 +131,7 @@ def run_fusion_d8(
     Performs depth map fusion between real and monocular.
     """
 
-    results = Path(f"comparation/results/{scene}")
+    results = Path(f"results_new/{scene}")
     processor = DepthFusionProcessor(
         depth_real_dir=Path(f"datasets/{scene}/depth_npy"),
         depth_estimated_dir=results / "d4/depth_npy",
@@ -150,15 +150,15 @@ def run_fused_reconstruction_d9(
     """
     Reconstructs from fused depth maps.
     """
-    results = Path(f"comparation/results/{scene}")
+    results = Path(f"results_new/{scene}")
     output = results / "d8/fused_depth"
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=Path(f"datasets/{scene}/rgb"),
         depth_dir=output,
         intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"comparation/results/{scene}/d9_2"),
-        output_pcd_path=Path(f"comparation/results/{scene}/d9/reconstruction_fused.ply"),
+        output_dir=Path(f"results_new/{scene}/d9_2"),
+        output_pcd_path=Path(f"results_new/{scene}/d9/reconstruction_fused.ply"),
         voxel_size=voxel_size
     )
     reconstructor.run()
@@ -182,7 +182,7 @@ def run_pipeline_sequence() -> None:
     # )
     # run_reconstruction_d3(scene, voxel_size)
 
-    # run_monodepth_d4(scene)
+    run_monodepth_d4(scene)
     # run_reconstruction_d5(
     #     scene,
     #     voxel_size,
@@ -195,13 +195,13 @@ def run_pipeline_sequence() -> None:
     #     depth_scale=1000.0
     # )
 
-    run_fusion_d8(
-        scene,
-        scale=1000,
-        trunc=4.0,
-        mode='min',
-        visualize=True
-    )
+    # run_fusion_d8(
+    #     scene,
+    #     scale=1000,
+    #     trunc=4.0,
+    #     mode='min',
+    #     visualize=True
+    # )
 
     # run_fused_reconstruction_d9(
     #     scene,
