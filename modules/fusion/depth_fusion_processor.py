@@ -10,87 +10,122 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
-import open3d as o3d
 import cv2
-
-from modules.reconstruction.intrinsic_loader import IntrinsicLoader
-from modules.reconstruction.rgbd_loader import RGBDLoader
 
 
 class DepthFusionProcessor:
     """
-    Performs fusion between real and monocular depth maps using inverse-depth
-    linear regression to compute scale and shift.
+    Batch processor for depth fusion, handling multiple scenes and
+    configurations.
     """
 
     def __init__(
         self,
-        rgb_dir: Path,
         depth_real_dir: Path,
-        depth_mono_dir: Path,
-        transform_path: Path,
-        intrinsics_path: Path,
+        depth_estimated_dir: Path,
         output_dir: Path,
-        depth_scale: float = 1000.0,
-        depth_trunc: float = 5.0,
-        visualize: bool = True,
-        voxel_size: float = 0.02
-    ) -> None:
-        self._rgb_dir = rgb_dir
-        self._depth_real_dir = depth_real_dir
-        self._depth_mono_dir = depth_mono_dir
-        self._transform = np.load(transform_path)
-        self._intrinsics = IntrinsicLoader.load_from_json(intrinsics_path)
-        self._output_dir = output_dir
-        self._output_dir.mkdir(parents=True, exist_ok=True)
-
-        self._depth_scale = depth_scale
-        self._depth_trunc = depth_trunc
-        self._visualize = visualize
-        self._voxel_size = voxel_size
-
-    def _rotate_point_clouds(
-        self,
-        clouds: List[o3d.geometry.PointCloud],
-        rotation: Tuple[float, float, float] = (np.pi, 0, 0)
     ) -> None:
         """
-        Applies rotation to align point clouds with camera frame.
+        Initializes the batch processor with directories and transformation
+        path.
 
         Args:
-            clouds (List[o3d.geometry.PointCloud]): List of point clouds to
-                rotate.
-            rotation (Tuple[float, float, float]): Rotation angles in radians
-                around x, y, z axes.
+            depth_real_dir (Path): Directory containing real depth maps.
+            depth_estimated_dir (Path): Directory containing estimated depth
+                maps.
+            output_dir (Path): Directory to save the fused depth maps and
+                statistics.
         """
-        R = o3d.geometry.get_rotation_matrix_from_xyz(rotation)
-        for pcd in clouds:
-            pcd.rotate(R, center=(0, 0, 0))
+        self._depth_real_dir = depth_real_dir
+        self._depth_estimated_dir = depth_estimated_dir
+        self._output_dir = output_dir
 
-    def _project_point_cloud_to_depth(
+        self._validate_directories()
+
+    def _validate_directories(self) -> None:
+        """
+        Validates the existence of the required directories and files.
+        Raises:
+            FileNotFoundError: If any required directory or file is missing.
+        """
+        for directory in [self._depth_real_dir, self._depth_estimated_dir]:
+            if not directory.exists():
+                raise FileNotFoundError(f"Directory not found: {directory}")
+        self._output_dir.mkdir(parents=True, exist_ok=True)
+        self._npy_path = self._output_dir / "npy"
+        self._npy_path.mkdir(parents=True, exist_ok=True)
+        self._png_dir = self._output_dir / "png"
+        self._png_dir.mkdir(parents=True, exist_ok=True)
+
+    def _load_depth_maps(
         self,
-        pcd: o3d.geometry.PointCloud
-    ) -> np.ndarray:
+        directory: Path,
+        extension: str
+    ) -> List[np.ndarray]:
         """
-        Projects a point cloud into a 2D depth image using camera intrinsics.
+        Loads depth maps from the specified directory.
+
+        Args:
+            directory (Path): Directory containing depth maps.
+            extension (str): File extension to filter depth maps.
+
+        Returns:
+            List[np.ndarray]: List of loaded depth maps nx(height, width).
         """
-        width, height = self._intrinsics.width, self._intrinsics.height
-        fx, fy = self._intrinsics.get_focal_length()
-        cx, cy = self._intrinsics.get_principal_point()
+        depth_maps = []
+        sorted_directory = sorted(directory.glob(f"*{extension}"))
+        for file in sorted_directory:
+            depth_map = np.load(file)
+            if depth_map.ndim == 2:
+                depth_maps.append(depth_map)
+            else:
+                raise ValueError(
+                    f"Invalid depth map shape in {file}: {depth_map.shape}"
+                )
+        return depth_maps
 
-        depth_img = np.zeros((height, width), dtype=np.float32)
-        z_buffer = np.full((height, width), np.inf)
+    def _fuse_maps_mean_std(
+        self,
+        depth_real: np.ndarray,
+        depth_estimated: np.ndarray
+    ) -> Tuple[np.ndarray, Dict]:
+        """
+        Fuses two depth maps using mean and standard deviation.
 
-        for x, y, z in np.asarray(pcd.points):
-            if z <= 0 or z > self._depth_trunc:
-                continue
-            u = int(round((x * fx) / z + cx))
-            v = int(round((y * fy) / z + cy))
-            if 0 <= u < width and 0 <= v < height and z < z_buffer[v, u]:
-                z_buffer[v, u] = z
-                depth_img[v, u] = z
+        Args:
+            depth_real (np.ndarray): Real depth map.
+            depth_estimated (np.ndarray): Estimated depth map.
+        Returns:
+            Tuple[np.ndarray, Dict]: Fused depth map and statistics.
+        """
+        mask_real = depth_real > 0
+        mask_estimated = depth_estimated > 0
+        if not np.any(mask_real) or not np.any(mask_estimated):
+            raise ValueError("No valid pixels for fusion.")
 
-        return (depth_img * self._depth_scale).astype(np.uint16)
+        estimated_mean = depth_estimated.mean()
+        estimated_std = depth_estimated.std()
+
+        real_mean = depth_real.mean()
+        real_std = depth_real.std()
+
+        # mask = mask_real & mask_estimated
+        mask = mask_real
+
+        fused = np.zeros_like(depth_real, dtype=np.float32)
+        fused[mask] = (
+            (depth_real[mask] - real_mean) / real_std +
+            (depth_estimated[mask] - estimated_mean) / estimated_std
+        ) * estimated_std + estimated_mean
+
+        stats = {
+            "real_mean": float(real_mean),
+            "real_std": float(real_std),
+            "estimated_mean": float(estimated_mean),
+            "estimated_std": float(estimated_std),
+            "num_valid_pairs": int(np.count_nonzero(mask))
+        }
+        return fused, stats
 
     def _fuse_maps_least_squares(
         self, real: np.ndarray, mono: np.ndarray
@@ -121,122 +156,144 @@ class DepthFusionProcessor:
         }
         return fused, stats
 
-    def _visualize_comparison(
+    def _normalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
+        """
+        Normalizes the depth map to a range of 0-255.
+
+        Args:
+            depth (np.ndarray): Depth map to normalize.
+
+        Returns:
+            np.ndarray: Normalized depth map.
+        """
+        aux_1 = depth - depth.min()
+        aux_2 = depth.max() - depth.min()
+        normalized = (aux_1) / (aux_2) * 255.0
+        return normalized.astype(np.uint8)
+
+    def _combine_depth_maps(
         self,
-        name: str,
         depth_real: np.ndarray,
-        projected: np.ndarray,
+        depth_estimated: np.ndarray,
         fused: np.ndarray
+    ) -> np.ndarray:
+        """
+        Combines real, estimated, and fused depth maps into a single image.
+
+        Args:
+            depth_real (np.ndarray): Real depth map.
+            depth_estimated (np.ndarray): Estimated depth map.
+            fused (np.ndarray): Fused depth map.
+
+        Returns:
+            np.ndarray: Combined image of the three depth maps.
+        """
+        real_normalized = self._normalize_png_depth(depth_real)
+        estimated_normalized = self._normalize_png_depth(depth_estimated)
+        fused_normalized = self._normalize_png_depth(fused)
+
+        combined = np.hstack(
+            (real_normalized[:, :, np.newaxis],
+             estimated_normalized[:, :, np.newaxis],
+             fused_normalized[:, :, np.newaxis])
+        )
+        return combined
+
+    def _save_combined_image(
+        self,
+        combined_img: np.ndarray,
+        index: int
     ) -> None:
         """
-        Saves a side-by-side comparison of real, projected and fused depth
-        maps.
+        Saves the combined image of real, estimated, and fused depth maps.
+
+        Args:
+            combined_img (np.ndarray): Combined image to save.
+            index (int): Index for naming the output file.
         """
-        def normalize_depth(depth):
-            d_norm = cv2.normalize(
-                depth.astype(np.float32),
-                None, 0, 255,
-                cv2.NORM_MINMAX
+        output_path = self._png_dir / f"combined_depth_{index:04d}.png"
+        cv2.imwrite(str(output_path), combined_img)
+        print(f"[✓] Combined depth map saved to: {output_path}")
+
+    def _save_fused_depth_map(
+        self,
+        fused: np.ndarray,
+        index: int
+    ) -> None:
+        """
+        Saves the fused depth map as a .npy file.
+
+        Args:
+            fused (np.ndarray): Fused depth map to save.
+            index (int): Index for naming the output file.
+        """
+        fused_path = self._npy_path / f"fused_depth_{index:04d}.npy"
+        np.save(fused_path, fused.astype(np.float32))
+        print(f"[✓] Fused depth map saved to: {fused_path}")
+
+    def run(self, mode: int) -> None:
+        """
+        Loads depth maps from both real and estimated directories, applies
+        transformations, and fuses them using least squares method.
+        Saves the fused depth maps and statistics to the output directory.
+        """
+        # Load depth maps from both directories in .npy format (height, width)
+        print("[INFO] Loading depth maps...")
+        depth_real_maps = self._load_depth_maps(self._depth_real_dir, '.npy')
+        depth_estimated_maps = self._load_depth_maps(self._depth_estimated_dir,
+                                                     '.npy')
+
+        # Check if the number of depth maps matches
+        if len(depth_real_maps) != len(depth_estimated_maps):
+            raise ValueError(
+                "Mismatch in number of depth maps "
+                "between real and est directories."
             )
-            return d_norm.astype(np.uint8)
 
-        real_vis = normalize_depth(depth_real)
-        proj_vis = normalize_depth(projected)
-        fused_vis = normalize_depth(fused)
-        diff_vis = normalize_depth(np.abs(depth_real - fused))
-
-        real_col = cv2.applyColorMap(real_vis, cv2.COLORMAP_JET)
-        proj_col = cv2.applyColorMap(proj_vis, cv2.COLORMAP_JET)
-        fused_col = cv2.applyColorMap(fused_vis, cv2.COLORMAP_JET)
-        diff_col = cv2.applyColorMap(diff_vis, cv2.COLORMAP_HOT)
-
-        top = np.hstack([real_col, proj_col])
-        bottom = np.hstack([fused_col, diff_col])
-        grid = np.vstack([top, bottom])
-
-        save_path = self._output_dir / f"{name}_comparison.png"
-        cv2.imwrite(str(save_path), grid)
-        print(f"[✓] Comparison image saved to: {save_path}")
-
-    def run(self) -> None:
-        """
-        Alternative run method that processes frames in a different way.
-        This is a placeholder for future modifications or different processing.
-        """
-        clouds_sensor = RGBDLoader.load_point_clouds(
-            self._rgb_dir,
-            self._depth_real_dir,
-            self._intrinsics,
-            self._voxel_size
-        )
-        clouds_estimated = RGBDLoader.load_point_clouds(
-            self._rgb_dir,
-            self._depth_mono_dir,
-            self._intrinsics,
-            self._voxel_size
-        )
-
-        assert len(clouds_sensor) == len(clouds_estimated), (
-            "[ERROR] Frame count mismatch between sensor and estimated clouds."
-        )
-
-        self._rotate_point_clouds(clouds_sensor)
-        self._rotate_point_clouds(clouds_estimated)
-
+        # Fuse depth maps using mean and std
         stats_all = []
-
-        for i, (pcd_real, pcd_mono) in enumerate(zip(clouds_sensor, clouds_estimated)):
-            print(f"[INFO] Processing frame {i + 1}/{len(clouds_sensor)}")
-
-            name = f"frame_{i:04d}"
-            real_path = self._depth_real_dir / f"{name}.npy"
-            mono_path = self._depth_mono_dir / f"{name}.npy"
-
-            depth_real = np.load(real_path).astype(np.float32)
-            depth_mono = np.load(mono_path).astype(np.float32)
-
-            # Apply transformation
-            pcd_mono.transform(self._transform[i])
-            projected = self._project_point_cloud_to_depth(
-                pcd_mono).astype(
-                    np.float32
-                ) / self._depth_scale
-
-            fused, fusion_stats = self._fuse_maps_least_squares(depth_real,
-                                                                depth_mono)
-
-            if self._visualize:
-                self._visualize_comparison(
-                    name=name,
-                    depth_real=depth_real,
-                    projected=projected,
-                    fused=fused
+        for i, (depth_real, depth_estimated) in enumerate(
+            zip(depth_real_maps, depth_estimated_maps)
+        ):
+            print(
+                f"[INFO] Processing depth map {i + 1}/{len(depth_real_maps)}")
+            if mode == 0:
+                # Fuse maps using least squares
+                fused, fusion_stats = self._fuse_maps_mean_std(
+                    depth_real,
+                    depth_estimated
+                )
+            elif mode == 1:
+                # Fuse maps using least squares
+                fused, fusion_stats = self._fuse_maps_least_squares(
+                    depth_real,
+                    depth_estimated
                 )
 
-            # Save outputs
-            np.save(self._output_dir / f"{name}.npy", fused.astype(np.float32))
-            cv2.imwrite(str(self._output_dir / f"{name}.png"),
-                        (fused * self._depth_scale).astype(np.uint16))
+            # Concatenate depth maps for visualization
+            concateneted_img = self._combine_depth_maps(
+                depth_real, depth_estimated, fused
+            )
 
-            # Compute error
-            valid = (depth_real > 0) & (fused > 0)
-            error_abs = np.abs((depth_real - fused)[valid]) * 1000.0
+            # Save concatenated image as png
+            self._save_combined_image(concateneted_img, i)
 
+            # Save fused depth map as npy
+            self._save_fused_depth_map(fused, i)
+
+            # Save statistics
             stats = {
-                "frame": name,
-                "valid_pixels": int(valid.sum()),
-                "depth_min_m": float(fused[valid].min()) if valid.any() else None,
-                "depth_max_m": float(fused[valid].max()) if valid.any() else None,
-                "depth_mean_m": float(fused[valid].mean()) if valid.any() else None,
-                "error_abs_mean_mm": float(error_abs.mean()) if valid.any() else None,
-                "error_abs_max_mm": float(error_abs.max()) if valid.any() else None,
-                "scale": fusion_stats["scale"],
-                "shift": fusion_stats["shift"],
-                "num_valid_pairs": fusion_stats["num_valid_pairs"]
+                "frame": f"fused_depth_{i:04d}",
+                "depth_min_m": float(fused.min()),
+                "depth_max_m": float(fused.max()),
+                "depth_mean_m": float(fused.mean()),
+                "depth_std_m": float(fused.std()),
+                "stats_method": fusion_stats
             }
             stats_all.append(stats)
 
-        with open(self._output_dir / "fusion_statistics.json", "w", encoding="utf-8") as f:
+        # Save all statistics to a JSON file
+        stats_path = self._output_dir / "fusion_statistics.json"
+        with open(stats_path, "w", encoding="utf-8") as f:
             json.dump(stats_all, f, indent=4)
-
-        print(f"[✓] Fusion statistics saved to: {self._output_dir / 'fusion_statistics.json'}")
+        print(f"[✓] Fusion statistics saved to: {stats_path}")
