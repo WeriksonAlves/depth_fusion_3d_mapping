@@ -190,6 +190,7 @@ class FrameICPAlignerBatch:
         trans, info = self._pairwise_icp(
             source, target, dist_coarse, dist_fine
         )
+        # trans = np.linalg.inv(trans)
         self._visualize_alignment(source, target, trans)
         return trans, info
 
@@ -270,7 +271,7 @@ class FrameICPAlignerBatch:
             self.name = f"frame_{i:04d}"
             trans, info = self._compute_icp(
                 src, tgt,
-                dist_coarse=self._voxel_size * 15.0,
+                dist_coarse=self._voxel_size * 2.5,
                 dist_fine=self._voxel_size * 1.5,
             )
             transforms.append(trans)
