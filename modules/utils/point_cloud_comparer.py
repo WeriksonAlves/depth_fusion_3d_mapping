@@ -91,8 +91,8 @@ class PointCloudComparer:
         o3d.visualization.draw_geometries(self._geometries)
 
     def _load_point_clouds(self,
-                          estimated_path: Path,
-                          real_path: Path) -> None:
+                           estimated_path: Path,
+                           real_path: Path) -> None:
         """
         Loads point clouds from specified paths.
 
@@ -105,7 +105,7 @@ class PointCloudComparer:
         return estimated, real
 
     def _estimate_scale_ratio(self, pcd_estimated: o3d.geometry.PointCloud,
-                             pcd_real: o3d.geometry.PointCloud) -> float:
+                              pcd_real: o3d.geometry.PointCloud) -> float:
         """
         Estimates a scale ratio between two point clouds based on mean distance
         to centroid (as a simple heuristic).
@@ -146,7 +146,8 @@ class PointCloudComparer:
         )
 
         if mode == 0:
-            print("[INFO] Using scale ratio based on mean distance to centroid.")
+            print(
+                "[INFO] Using scale ratio based on mean distance to centroid.")
             scale_ratio = self._estimate_scale_ratio(
                 pcd_estimated=estimated_pcd,
                 pcd_real=real_pcd
@@ -162,7 +163,7 @@ class PointCloudComparer:
 
         self._process_single_cloud(estimated_pcd, 0)
         self._process_single_cloud(real_pcd, 1)
-        
+
         if not self._geometries:
             print("[ERROR] No valid point clouds to visualize.")
             return
@@ -174,7 +175,7 @@ class PointCloudComparer:
         cloud: o3d.geometry.PointCloud,
         index: int
     ) -> None:
-        
+
         bbox = cloud.get_axis_aligned_bounding_box()
         center = bbox.get_center()
         if self._offset_apply:
