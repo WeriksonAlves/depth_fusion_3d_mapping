@@ -250,6 +250,48 @@ class DepthFusionProcessor:
         }
         return fused, stats
 
+    def _test(
+        self,
+        depth_real: np.ndarray,
+        depth_estimated: np.ndarray
+    ) -> Tuple[np.ndarray, Dict]:
+        """
+        Fuses two depth maps using mean and standard deviation in log space.
+
+        Args:
+            depth_real (np.ndarray): Real depth map.
+            depth_estimated (np.ndarray): Estimated depth map.
+
+        Returns:
+            Tuple[np.ndarray, Dict]: Fused depth map and statistics.
+        """
+        mask_real = depth_real > 0
+        mask_real_max = depth_real < 100
+        mask_real = mask_real & mask_real_max
+
+        mask_estimated = depth_estimated > 0
+        if not np.any(mask_real) or not np.any(mask_estimated):
+            raise ValueError("No valid pixels for fusion.")
+
+        estimated_log_mean = depth_estimated[mask_estimated].mean()
+        estimated_log_std = depth_estimated[mask_estimated].std()
+
+        real_log_mean = depth_real[mask_real].mean()
+        real_log_std = depth_real[mask_real].std()
+
+        fused = np.zeros_like(depth_real, dtype=np.float32)
+        fused = (
+            (depth_estimated - estimated_log_mean) / estimated_log_std
+        ) * real_log_std + real_log_mean
+
+        stats = {
+            "real_mean": float(real_log_mean),
+            "real_std": float(real_log_std),
+            "estimated_mean": float(estimated_log_mean),
+            "estimated_std": float(estimated_log_std)
+        }
+        return fused, stats
+
     def _normalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
         """
         Normalizes the depth map to a range of 0-255.
@@ -379,6 +421,10 @@ class DepthFusionProcessor:
                     depth_real,
                     depth_estimated
                 )
+            elif mode == 4:
+                # Fuse maps using mean and std in log space
+                fused, fusion_stats = self._test(depth_real,
+                                                 depth_estimated)
 
             # Concatenate depth maps for visualization
             concateneted_img = self._combine_depth_maps(
