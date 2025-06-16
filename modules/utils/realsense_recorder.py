@@ -118,6 +118,21 @@ class RealSenseRecorder:
         normalized = (aux_1) / (aux_2) * 255.0
         return normalized.astype(np.uint8)
 
+    def unnormalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
+        """
+        Unnormalizes the depth map from a range of 0-255 to meters.
+
+        Args:
+            depth (np.ndarray): Normalized depth map.
+
+        Returns:
+            np.ndarray: Unnormalized depth map in meters.
+        """
+        aux_1 = depth.astype(np.float32) / 255.0
+        aux_2 = aux_1.max() - aux_1.min()
+        unnormalized = aux_1 * aux_2 + aux_1.min()
+        return unnormalized.astype(np.float32)
+
     def _save_frame(
         self,
         color: np.ndarray,
