@@ -10,35 +10,49 @@ from modules.utils.frame_icp_aligner import FrameICPAlignerBatch
 from modules.utils.depth_fusion_processor import DepthFusionProcessor
 
 
-def stage1(scene: str, max_frames=60, fps=15, voxel_size=0.02) -> None:
-    dataset_base = Path(f"datasets/{scene}")
-    rgb_dir = dataset_base / "rgb"
-    depth_dir = dataset_base / "depth_npy"
-    intrinsics_path = dataset_base / "intrinsics.json"
+def run_stage_1_capture_and_reconstruct(
+    scene: str,
+    max_frames: int = 60,
+    fps: int = 15,
+    voxel_size: float = 0.02
+) -> None:
+    dataset = Path(f"datasets/{scene}")
+    rgb_dir = dataset / "rgb"
+    depth_dir = dataset / "depth_npy"
+    intrinsics = dataset / "intrinsics.json"
 
     output_dir = Path(f"results_new/{scene}/step_1")
-    output_pcd_path = output_dir / "reconstruction_sensor.ply"
+    output_pcd = output_dir / "reconstruction_sensor.ply"
 
+    print("[INFO] Starting RealSense capture...")
     recorder = RealSenseRecorder(
-        output_path=dataset_base,
+        output_path=dataset,
         max_frames=max_frames,
         fps=fps
     )
     recorder.start()
     recorder.capture()
 
+    print("[INFO] Running reconstruction using sensor depth...")
     reconstructor = MultiwayReconstructorOffline(
-        rgb_dir, depth_dir, intrinsics_path, output_dir,
-        output_pcd_path, voxel_size)
+        rgb_dir, depth_dir, intrinsics, output_dir, output_pcd, voxel_size
+    )
     reconstructor.run()
 
 
-def stage2(scene: str, voxel_size=0.02) -> None:
-    dataset_base = Path(f"datasets/{scene}")
-    rgb_dir = dataset_base / "rgb"
+def run_stage_2_monocular_inference_and_reconstruction(
+    scene: str,
+    voxel_size: float = 0.02
+) -> None:
+    dataset = Path(f"datasets/{scene}")
+    rgb_dir = dataset / "rgb"
+    intrinsics = dataset / "intrinsics.json"
     output_dir = Path(f"results_new/{scene}/step_2")
     checkpoint_dir = Path("checkpoints")
+    depth_output = output_dir / "depth_npy"
+    output_pcd = output_dir / "reconstruction_est.ply"
 
+    print("[INFO] Running monocular depth inference...")
     inferencer = DepthBatchInferencer(
         rgb_dir=rgb_dir,
         output_path=output_dir,
@@ -47,36 +61,37 @@ def stage2(scene: str, voxel_size=0.02) -> None:
     )
     inferencer.run()
 
-    depth_dir = output_dir / "depth_npy"
-    intrinsics_path = dataset_base / "intrinsics.json"
-    output_pcd_path = output_dir / "reconstruction_est.ply"
-
+    print("[INFO] Running reconstruction using estimated depth...")
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=rgb_dir,
-        depth_dir=depth_dir,
-        intrinsics_path=intrinsics_path,
+        depth_dir=depth_output,
+        intrinsics_path=intrinsics,
         output_dir=output_dir,
-        output_pcd_path=output_pcd_path,
+        output_pcd_path=output_pcd,
         voxel_size=voxel_size
     )
     reconstructor.run()
 
 
-def stage3(scene: str, voxel_size=0.02) -> None:
-    dataset_base = Path(f"datasets/{scene}")
-    results_base = Path(f"results_new/{scene}")
+def run_stage_3_alignment_and_fusion(
+    scene: str,
+    voxel_size: float = 0.02
+) -> None:
+    dataset = Path(f"datasets/{scene}")
+    results = Path(f"results_new/{scene}")
+    rgb_dir = dataset / "rgb"
+    depth_real = dataset / "depth_npy"
+    depth_est = results / "step_2/depth_npy"
+    intrinsics = dataset / "intrinsics.json"
+    output_dir = results / "step_3"
+    fused_dir = output_dir / "both"
 
-    rgb_dir = dataset_base / "rgb"
-    depth_sensor_dir = dataset_base / "depth_npy"
-    depth_estimation_dir = results_base / "step_2/depth_npy"
-    intrinsics_path = dataset_base / "intrinsics.json"
-    output_dir = results_base / "step_3"
-
+    print("[INFO] Running ICP alignment and scale estimation...")
     batch = FrameICPAlignerBatch(
         rgb_dir=rgb_dir,
-        depth_sensor_dir=depth_sensor_dir,
-        depth_estimation_dir=depth_estimation_dir,
-        intrinsics_path=intrinsics_path,
+        depth_sensor_dir=depth_real,
+        depth_estimation_dir=depth_est,
+        intrinsics_path=intrinsics,
         output_dir=output_dir,
         voxel_size=voxel_size,
     )
@@ -87,17 +102,19 @@ def stage3(scene: str, voxel_size=0.02) -> None:
     )
     batch.run(scale)
 
-    processor = DepthFusionProcessor(
-        depth_real_dir=depth_sensor_dir,
-        depth_estimated_dir=depth_estimation_dir,
-        output_dir=output_dir / "both",
+    print("[INFO] Fusing depth maps (real and estimated)...")
+    fusion = DepthFusionProcessor(
+        depth_real_dir=depth_real,
+        depth_estimated_dir=depth_est,
+        output_dir=fused_dir
     )
-    processor.run(0)
+    fusion.run(0)
 
+    print("[INFO] Reconstructing from fused depth...")
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=rgb_dir,
-        depth_dir=output_dir / "both/npy",
-        intrinsics_path=intrinsics_path,
+        depth_dir=fused_dir / "npy",
+        intrinsics_path=intrinsics,
         output_dir=output_dir / "reconstruction",
         output_pcd_path=output_dir / "reconstruction.ply",
         voxel_size=voxel_size
@@ -105,36 +122,33 @@ def stage3(scene: str, voxel_size=0.02) -> None:
     reconstructor.run()
 
 
-def run_compare_d5(
+def run_compare_sensor_vs_estimated(
     scene: str,
-    offset_apply: bool = False
+    offset: bool = False
 ) -> None:
     """
-    Compares point clouds from sensor vs monocular estimation.
+    Visual comparison of point clouds: sensor vs monocular model.
     """
-    path_d435 = Path(f"results_new/{scene}/d3/reconstruction_sensor.ply")
-    path_mono = Path(f"results_new/{scene}/d5/reconstruction_est.ply")
+    results = Path(f"results_new/{scene}")
+    path_sensor = results / "step_1/reconstruction_sensor.ply"
+    path_est = results / "step_2/reconstruction_est.ply"
 
-    comparer = PointCloudComparer(offset_apply=offset_apply)
-    comparer.run([path_mono, path_d435], mode=0)
+    comparer = PointCloudComparer(offset_apply=offset)
+    comparer.run([path_est, path_sensor], mode=0)
+
+
+def main() -> None:
+    scene = "lab_scene_kinect_xyz"
+    print(f"[✓] Running pipeline for scene: {scene}")
+
+    # run_stage_1_capture_and_reconstruct(scene, max_frames=60, fps=15,
+    #                                     voxel_size=0.02)
+    run_stage_2_monocular_inference_and_reconstruction(scene, voxel_size=0.05)
+    # run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
+    # run_compare_sensor_vs_estimated(scene, offset=False)
 
 
 if __name__ == "__main__":
-    scene = "lab_scene_d"
-    print(f"Running pipeline for scene: {scene}")
-
-    # Stage 1: Capture and reconstruct using RealSense depth
-    # stage1(scene, max_frames=60, fps=15, voxel_size=0.02)
-
-    # # Stage 2: Infer depth using monocular model and reconstruct
-    stage2(scene, voxel_size=0.05)
-
-    # # Stage 3: Align frames using ICP and fuse depth maps
-    stage3(scene, voxel_size=0.01)
+    main()
 
     # modules/reconstruction/rgbd_loader.py # Read .ply
-
-    # run_compare_d5(
-    #     scene,
-    #     offset_apply=False
-    # )
