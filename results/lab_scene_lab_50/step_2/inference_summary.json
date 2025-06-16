@@ -1,0 +1,8 @@
+{
+    "num_input_rgb": 50,
+    "num_output_npy": 50,
+    "num_output_png": 50,
+    "match_npy": true,
+    "match_png": true,
+    "all_match": true
+}
