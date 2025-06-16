@@ -82,17 +82,15 @@ class MultiwayReconstructorOffline:
             source,
             target,
             dist_coarse,
-            np.eye(4),
-            o3d.pipelines.registration.
-            TransformationEstimationPointToPlane()
+            np.identity(4),
+            o3d.pipelines.registration.TransformationEstimationPointToPlane()
         )
         icp_fine = o3d.pipelines.registration.registration_icp(
             source,
             target,
             dist_fine,
             icp_coarse.transformation,
-            o3d.pipelines.registration.
-            TransformationEstimationPointToPlane()
+            o3d.pipelines.registration.TransformationEstimationPointToPlane()
         )
         info = o3d.pipelines.registration.\
             get_information_matrix_from_point_clouds(
@@ -112,9 +110,9 @@ class MultiwayReconstructorOffline:
         """Builds pose graph using pairwise transformations."""
         pose_graph = o3d.pipelines.registration.PoseGraph()
         pose_graph.nodes.append(
-            o3d.pipelines.registration.PoseGraphNode(np.eye(4))
+            o3d.pipelines.registration.PoseGraphNode(np.identity(4))
         )
-        odometry = np.eye(4)
+        odometry = np.identity(4)
 
         for src_id in range(len(clouds)):
             for tgt_id in range(src_id + 1, len(clouds)):
@@ -125,7 +123,7 @@ class MultiwayReconstructorOffline:
                     dist_fine
                 )
                 if tgt_id == src_id + 1:
-                    odometry = trans @ odometry
+                    odometry = np.dot(trans, odometry)
                     pose_graph.nodes.append(
                         o3d.pipelines.registration.PoseGraphNode(
                             np.linalg.inv(odometry)
@@ -157,7 +155,7 @@ class MultiwayReconstructorOffline:
         for cloud in clouds:
             merged += cloud
 
-        o3d.io.write_point_cloud(str(self._output_pcd_path), merged)
+        o3d.io.write_point_cloud(self._output_pcd_path, merged)
         print(f"[✓] Final point cloud saved to: {self._output_pcd_path}")
 
         return merged
@@ -171,7 +169,7 @@ class MultiwayReconstructorOffline:
         metrics = {
             "num_points": num_points,
             "volume_aabb": volume,
-            "extent_aabb": aabb.get_extent().tolist(),
+            "extent_aabb": aabb.get_extent().tolist(),  # [x, y, z] extent
             "voxel_size": self._voxel_size,
             "avg_density": num_points / volume if volume > 0 else 0.0
         }
@@ -180,6 +178,36 @@ class MultiwayReconstructorOffline:
         with open(metrics_path, "w", encoding="utf-8") as f:
             json.dump(metrics, f, indent=4)
         print(f"[✓] Metrics saved to: {metrics_path}")
+
+    def _save_trajectory(
+        self,
+        pose_graph: o3d.pipelines.registration.PoseGraph
+    ) -> None:
+        """
+        Saves the camera trajectory (translation vectors from poses) as a
+        point cloud and raw numpy.
+
+        Args:
+            pose_graph (PoseGraph): Optimized pose graph from multiway
+                registration.
+        """
+        trajectory = []
+        for node in pose_graph.nodes:
+            T = node.pose
+            center = T[:3, 3]
+            trajectory.append(center)
+
+        trajectory = np.array(trajectory)
+        traj_pcd = o3d.geometry.PointCloud()
+        traj_pcd.points = o3d.utility.Vector3dVector(trajectory)
+        traj_pcd.paint_uniform_color([1, 0, 0])  # Red for trajectory
+
+        traj_pcd_path = self._output_dir / "camera_trajectory.ply"
+        traj_npy_path = self._output_dir / "camera_trajectory.npy"
+        o3d.io.write_point_cloud(str(traj_pcd_path), traj_pcd)
+        np.save(traj_npy_path, trajectory)
+
+        print(f"[✓] Camera trajectory saved to: {traj_pcd_path}")
 
     def _save_snapshot(self, cloud: o3d.geometry.PointCloud) -> None:
         """Saves a rendered snapshot image of the final cloud."""
@@ -209,23 +237,33 @@ class MultiwayReconstructorOffline:
         print("[INFO] Building pose graph...")
         dist_coarse = self._voxel_size * 15.0
         dist_fine = self._voxel_size * 1.5
-        pose_graph = self._build_pose_graph(clouds, dist_coarse, dist_fine)
+        for pcd in clouds:
+            pcd.rotate(pcd.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
+        with o3d.utility.VerbosityContextManager(
+                o3d.utility.VerbosityLevel.Debug) as cm:
+            pose_graph = self._build_pose_graph(clouds, dist_coarse, dist_fine)
 
         print("[INFO] Optimizing pose graph globally...")
-        o3d.pipelines.registration.global_optimization(
-            pose_graph,
-            o3d.pipelines.registration.GlobalOptimizationLevenbergMarquardt(),
-            o3d.pipelines.registration.GlobalOptimizationConvergenceCriteria(),
-            o3d.pipelines.registration.GlobalOptimizationOption(
-                max_correspondence_distance=dist_fine,
-                edge_prune_threshold=0.25,
-                reference_node=0
-            )
+        option = o3d.pipelines.registration.GlobalOptimizationOption(
+            max_correspondence_distance=dist_fine,
+            edge_prune_threshold=0.25,
+            reference_node=0
         )
+        with o3d.utility.VerbosityContextManager(
+                o3d.utility.VerbosityLevel.Debug) as cm:
+            o3d.pipelines.registration.global_optimization(
+                pose_graph,
+                o3d.pipelines.registration.
+                GlobalOptimizationLevenbergMarquardt(),
+                o3d.pipelines.registration.
+                GlobalOptimizationConvergenceCriteria(),
+                option
+            )
 
         print("[INFO] Merging and saving result...")
         merged = self._merge_and_save(clouds, pose_graph)
         self._save_metrics(merged)
+        self._save_trajectory(pose_graph)
         self._save_snapshot(merged)
 
         o3d.visualization.draw([merged])

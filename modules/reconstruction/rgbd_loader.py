@@ -51,7 +51,7 @@ class RGBDLoader:
             )
             pcd = RGBDLoader._create_point_cloud_from_rgbd(
                 rgbd_image, intrinsic
-            )
+            )  # Read .ply
             pcd_down = RGBDLoader._downsample_and_estimate_normals(
                 pcd, voxel_size
             )

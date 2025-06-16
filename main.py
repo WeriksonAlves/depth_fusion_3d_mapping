@@ -1,4 +1,6 @@
 from pathlib import Path
+import numpy as np
+import open3d as o3d
 
 from modules.utils.realsense_recorder import RealSenseRecorder
 from modules.reconstruction.multiway_reconstructor_offline import (
@@ -6,211 +8,209 @@ from modules.reconstruction.multiway_reconstructor_offline import (
 )
 from modules.inference.depth_batch_inferencer import DepthBatchInferencer
 from modules.utils.point_cloud_comparer import PointCloudComparer
-from modules.align.frame_icp_aligner import FrameICPAligner
-from modules.align.frame_icp_batch_aligner import FrameICPAlignerBatch
-from modules.fusion.depth_fusion_processor import DepthFusionProcessor
+from modules.utils.frame_icp_aligner import FrameICPAlignerBatch
+from modules.utils.depth_fusion_processor import DepthFusionProcessor
 
 
-def run_capture_d12(output_path,
-                    max_frames=60,
-                    fps=15) -> None:
+def visualize_camera_trajectory(
+    trajectory_path: Path,
+    reconstruction_path: Path = None
+) -> None:
     """
-    Captures frames using RealSense and saves RGB, depth, and intrinsics.
+    Visualizes the camera trajectory as a 3D line plot using Open3D.
+
+    Args:
+        trajectory_path (Path): Path to .npy file with camera centers (N, 3).
+        reconstruction_path (Path, optional): Path to .ply file with the
+            reconstructed scene (optional).
     """
+    # Load trajectory points
+    trajectory = np.load(trajectory_path)
+    traj_pcd = o3d.geometry.PointCloud()
+    traj_pcd.points = o3d.utility.Vector3dVector(trajectory)
+    traj_pcd.paint_uniform_color([1, 0, 0])  # red
+
+    # Create lines between successive points
+    lines = [[i, i + 1] for i in range(len(trajectory) - 1)]
+    line_set = o3d.geometry.LineSet(
+        points=o3d.utility.Vector3dVector(trajectory),
+        lines=o3d.utility.Vector2iVector(lines)
+    )
+    line_set.colors = o3d.utility.Vector3dVector(
+        [[0, 1, 0] for _ in lines]  # green
+    )
+
+    geometries = [traj_pcd, line_set]
+
+    if reconstruction_path and reconstruction_path.exists():
+        scene = o3d.io.read_point_cloud(str(reconstruction_path))
+        geometries.insert(0, scene)
+
+    print("[INFO] Visualizing trajectory...")
+    o3d.visualization.draw_geometries(
+        geometries,
+        window_name="Camera Trajectory (Red Points + Green Path)"
+    )
+
+
+def run_stage_1_capture_and_reconstruct(
+    scene: str,
+    max_frames: int = 60,
+    fps: int = 15,
+    voxel_size: float = 0.02
+) -> None:
+    dataset = Path(f"datasets/{scene}")
+    rgb_dir = dataset / "rgb"
+    depth_dir = dataset / "depth_npy"
+    intrinsics = dataset / "intrinsics.json"
+
+    output_dir = Path(f"results/{scene}/step_1")
+    output_pcd = output_dir / "reconstruction_sensor.ply"
+
+    print("[INFO] Starting RealSense capture...")
     recorder = RealSenseRecorder(
-        output_path=output_path,
+        output_path=dataset,
         max_frames=max_frames,
         fps=fps
     )
     recorder.start()
     recorder.capture()
 
-
-def run_reconstruction_d3(scene: str, voxel_size=0.02) -> None:
-    """
-    Runs reconstruction using RealSense depth.
-    """
+    print("[INFO] Running reconstruction using sensor depth...")
     reconstructor = MultiwayReconstructorOffline(
-        rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=Path(f"datasets/{scene}/depth_npy"),
-        intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results/{scene}/d3"),
-        output_pcd_path=Path(f"results/{scene}/d3/reconstruction_sensor.ply"),
-        voxel_size=voxel_size
+        rgb_dir, depth_dir, intrinsics, output_dir, output_pcd, voxel_size
     )
     reconstructor.run()
 
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=output_dir / "camera_trajectory.npy",
+        reconstruction_path=output_pcd
+    )
 
-def run_monodepth_d4(scene: str, scaling_factor=1.0) -> None:
-    """
-    Performs monocular depth inference using DepthAnythingV2.
-    """
 
-    input_dir = Path(f"datasets/{scene}/rgb")
-    output_dir = Path(f"results/{scene}/d4")
+def run_stage_2_monocular_inference_and_reconstruction(
+    scene: str,
+    voxel_size: float = 0.02
+) -> None:
+    dataset = Path(f"datasets/{scene}")
+    rgb_dir = dataset / "rgb"
+    intrinsics = dataset / "intrinsics.json"
+    output_dir = Path(f"results/{scene}/step_2")
     checkpoint_dir = Path("checkpoints")
+    depth_output = output_dir / "depth_npy"
+    output_pcd = output_dir / "reconstruction_est.ply"
 
-    if not input_dir.exists():
-        raise FileNotFoundError(f"Input not found: {input_dir}")
-    if not checkpoint_dir.exists():
-        raise FileNotFoundError(f"Checkpoint not found: {checkpoint_dir}")
-
+    print("[INFO] Running monocular depth inference...")
     inferencer = DepthBatchInferencer(
-        input_dir=input_dir,
+        rgb_dir=rgb_dir,
         output_path=output_dir,
         encoder="vits",
         checkpoint_dir=checkpoint_dir,
-        scaling_factor=scaling_factor
     )
     inferencer.run()
 
-
-def run_reconstruction_d5(scene: str, voxel_size=0.02) -> None:
-    """
-    Runs reconstruction using monocular depth estimates.
-    """
-
+    print("[INFO] Running reconstruction using estimated depth...")
     reconstructor = MultiwayReconstructorOffline(
-        rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=Path(f"results/{scene}/d4/depth_npy"),
-        intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results/{scene}/d5"),
-        output_pcd_path=Path(f"results/{scene}/d5/reconstruction_est.ply"),
+        rgb_dir=rgb_dir,
+        depth_dir=depth_output,
+        intrinsics_path=intrinsics,
+        output_dir=output_dir,
+        output_pcd_path=output_pcd,
         voxel_size=voxel_size
     )
     reconstructor.run()
 
-
-def run_compare_d5(scene: str, offset_apply: bool = False) -> None:
-    """
-    Compares point clouds from sensor vs monocular estimation.
-    """
-    path_d435 = Path(f"results/{scene}/d3/reconstruction_sensor.ply")
-    path_mono = Path(f"results/{scene}/d5/reconstruction_est.ply")
-
-    comparer = PointCloudComparer(offset_apply=offset_apply)
-    comparer.visualize([path_d435, path_mono])
-
-
-def run_alignment_d6(scene: str, frame_index: int = 0) -> None:
-    """
-    Runs ICP alignment for a single frame.
-    """
-    aligner = FrameICPAligner(
-        dataset_dir=Path(f"datasets/{scene}"),
-        results_dir=Path(f"results/{scene}"),
-        frame_index=frame_index
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=output_dir / "camera_trajectory.npy",
+        reconstruction_path=output_pcd
     )
-    aligner.run()
 
 
-def run_batch_alignment_d6(scene: str,
-                           len_range: int = 10,
-                           voxel_size: float = 0.02,
-                           depth_scale=1000.0) -> None:
-    """
-    Runs ICP alignment in batch for multiple frames.
-    """
-    batch = FrameICPAlignerBatch(
-        scene_name=scene,
-        frame_indices=list(range(len_range)),
-        voxel_size=voxel_size,
-        depth_scale=depth_scale
-    )
-    batch.run()
-
-
-def run_fusion_d8(
+def run_stage_3_alignment_and_fusion(
     scene: str,
-    scale: int = 100,
-    trunc: float = 3.0,
-    mode: str = "min",
-    visualize: bool = True
-) -> None:
-    """
-    Performs depth map fusion between real and monocular.
-
-    Args:
-        scene (str): Name of the scene to process.
-        scale (int): Scale factor for depth maps.
-        trunc (float): Truncation value for depth maps.
-        mode (str): Fusion mode, e.g., "min", "mean", "real-priority" and
-            "mono-priority".
-    """
-    base = Path(f"datasets/{scene}")
-    results = Path(f"results/{scene}")
-    output = results / f"d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
-
-    processor = DepthFusionProcessor(
-        rgb_dir=base / "rgb",
-        depth_real_dir=base / "depth_npy",
-        depth_mono_dir=results / "d4/depth_npy",
-        transform_path=results / "d6/T_d_to_m_frame0000.npy",
-        intrinsics_path=base / "intrinsics.json",
-        output_dir=output,
-        depth_scale=scale,
-        depth_trunc=trunc,
-        mode=mode,
-        visualize=visualize
-    )
-    processor.run()
-
-
-def run_fused_reconstruction_d9(
-    scene: str,
-    scale: int = 100,
-    trunc: float = 3.0,
-    mode: str = "min",
     voxel_size: float = 0.02
 ) -> None:
-    """
-    Reconstructs from fused depth maps.
-    """
+    dataset = Path(f"datasets/{scene}")
     results = Path(f"results/{scene}")
-    output = results / f"d8/fused_depth_Tdm_{mode}_{scale}_{trunc:.1f}"
+    rgb_dir = dataset / "rgb"
+    depth_real = dataset / "depth_npy"
+    depth_est = results / "step_2/depth_npy"
+    intrinsics = dataset / "intrinsics.json"
+    output_dir = results / "step_3"
+    fused_dir = output_dir / "both"
 
+    print("[INFO] Running ICP alignment and scale estimation...")
+    batch = FrameICPAlignerBatch(
+        rgb_dir=rgb_dir,
+        depth_sensor_dir=depth_real,
+        depth_estimation_dir=depth_est,
+        intrinsics_path=intrinsics,
+        output_dir=output_dir,
+        voxel_size=voxel_size,
+    )
+    scale, _ = batch.estimate_scale_from_depth_maps(
+        max_samples=50000,
+        min_depth=0.01,
+        max_depth=5.0
+    )
+    batch.run(scale)
+
+    print("[INFO] Fusing depth maps (real and estimated)...")
+    fusion = DepthFusionProcessor(
+        depth_real_dir=depth_real,
+        depth_estimated_dir=depth_est,
+        output_dir=fused_dir
+    )
+    fusion.run(0)
+
+    print("[INFO] Reconstructing from fused depth...")
     reconstructor = MultiwayReconstructorOffline(
-        rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=output,
-        intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results/{scene}/d9"),
-        output_pcd_path=Path(f"results/{scene}/d9/reconstruction_fused.ply"),
+        rgb_dir=rgb_dir,
+        depth_dir=fused_dir / "npy",
+        intrinsics_path=intrinsics,
+        output_dir=output_dir / "reconstruction",
+        output_pcd_path=output_dir / "reconstruction.ply",
         voxel_size=voxel_size
     )
     reconstructor.run()
 
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=output_dir / "camera_trajectory.npy",
+        reconstruction_path=output_dir / "reconstruction.ply"
+    )
 
-def run_pipeline_sequence() -> None:
+
+def run_compare_sensor_vs_estimated(
+    scene: str,
+    offset: bool = False
+) -> None:
     """
-    Executes a full pipeline step-by-step.
+    Visual comparison of point clouds: sensor vs monocular model.
     """
-    scene = "lab_scene_d"
-    voxel_size = 0.02
-    scaling_factor = 0.6
-    frame_index = 0
-    len_range = 10
-    scale = 100
-    trunc = 4.0
-    mode = "min"
-    visualize = True
+    results = Path(f"results/{scene}")
+    path_sensor = results / "step_1/reconstruction_sensor.ply"
+    path_est = results / "step_2/reconstruction_est.ply"
 
-    print(f"Running pipeline for scene: {scene}")
+    comparer = PointCloudComparer(offset_apply=offset)
+    comparer.run([path_est, path_sensor], mode=0)
 
-    # run_capture_d12(
-    #     output_path=Path(f"datasets/{scene}"),
-    #     max_frames=60,
-    #     fps=15
-    # )
 
-    run_reconstruction_d3(scene, voxel_size)
-    # run_monodepth_d4(scene, scaling_factor)
-    # run_reconstruction_d5(scene, voxel_size)
-    # run_alignment_d6(scene, frame_index)
-    # # run_batch_alignment_d6(scene, len_range, voxel_size)
-    # run_fusion_d8(scene, scale, trunc, mode, visualize)
-    # run_fused_reconstruction_d9(scene, scale, trunc, mode, voxel_size)
-    # run_compare_d5(scene, offset_apply=False)
+def main() -> None:
+    scene = "lab_scene_f"
+    print(f"[✓] Running pipeline for scene: {scene}")
+
+    run_stage_1_capture_and_reconstruct(scene, max_frames=60,
+                                        fps=15, voxel_size=0.02)
+    run_stage_2_monocular_inference_and_reconstruction(scene,
+                                                       voxel_size=0.05)
+    run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
+    run_compare_sensor_vs_estimated(scene, offset=False)
 
 
 if __name__ == "__main__":
-    run_pipeline_sequence()
+    main()
+
+    # modules/reconstruction/rgbd_loader.py # Read .ply

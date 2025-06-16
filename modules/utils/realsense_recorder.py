@@ -103,6 +103,36 @@ class RealSenseRecorder:
 
         logging.info(f"[✓] Intrinsics saved to: {self.intrinsics_file}")
 
+    def normalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
+        """
+        Normalizes the depth map to a range of 0-255.
+
+        Args:
+            depth (np.ndarray): Depth map to normalize.
+
+        Returns:
+            np.ndarray: Normalized depth map.
+        """
+        aux_1 = depth - depth.min()
+        aux_2 = depth.max() - depth.min()
+        normalized = (aux_1) / (aux_2) * 255.0
+        return normalized.astype(np.uint8)
+
+    def unnormalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
+        """
+        Unnormalizes the depth map from a range of 0-255 to meters.
+
+        Args:
+            depth (np.ndarray): Normalized depth map.
+
+        Returns:
+            np.ndarray: Unnormalized depth map in meters.
+        """
+        aux_1 = depth.astype(np.float32) / 255.0
+        aux_2 = aux_1.max() - aux_1.min()
+        unnormalized = aux_1 * aux_2 + aux_1.min()
+        return unnormalized.astype(np.float32)
+
     def _save_frame(
         self,
         color: np.ndarray,
@@ -119,9 +149,10 @@ class RealSenseRecorder:
         """
         name = f"frame_{index:04d}"
         cv2.imwrite(str(self.rgb_dir / f"{name}.png"), color)
-        cv2.imwrite(str(self.depth_png_dir / f"{name}.png"),
-                    (depth).astype(np.uint16))
-        # (depth * 1000.0).astype(np.uint16))
+        cv2.imwrite(
+            str(self.depth_png_dir / f"{name}.png"),
+            (self.normalize_png_depth(depth)).astype(np.uint16)
+        )
         np.save(self.depth_npy_dir / f"{name}.npy", depth)
 
     def capture(self) -> None:

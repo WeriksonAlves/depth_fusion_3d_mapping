@@ -1,7 +1,0 @@
-{
-    "fitness": 0.13640398461386724,
-    "inlier_rmse": 0.029166553148665716,
-    "voxel_size": 0.02,
-    "num_points_source": 136680,
-    "num_points_target": 194779
-}
