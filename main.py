@@ -73,8 +73,8 @@ def run_stage_1_capture_and_reconstruct(
         max_frames=max_frames,
         fps=fps
     )
-    recorder.start()
-    recorder.capture()
+    # recorder.start()
+    # recorder.capture()
 
     print("[INFO] Running reconstruction using sensor depth...")
     reconstructor = MultiwayReconstructorOffline(
@@ -199,15 +199,15 @@ def run_compare_sensor_vs_estimated(
 
 
 def main() -> None:
-    scene = "lab_scene_f"
+    scene = "lab_scene_lab"
     print(f"[✓] Running pipeline for scene: {scene}")
 
-    run_stage_1_capture_and_reconstruct(scene, max_frames=60,
-                                        fps=15, voxel_size=0.02)
-    run_stage_2_monocular_inference_and_reconstruction(scene,
-                                                       voxel_size=0.05)
-    run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
-    run_compare_sensor_vs_estimated(scene, offset=False)
+    run_stage_1_capture_and_reconstruct(scene, max_frames=25,
+                                        fps=4, voxel_size=0.02)
+    # run_stage_2_monocular_inference_and_reconstruction(scene,
+    #                                                    voxel_size=0.05)
+    # run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
+    # run_compare_sensor_vs_estimated(scene, offset=False)
 
 
 if __name__ == "__main__":
