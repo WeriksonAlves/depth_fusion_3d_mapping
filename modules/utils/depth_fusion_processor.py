@@ -110,7 +110,6 @@ class DepthFusionProcessor:
         real_std = depth_real.std()
 
         mask = mask_real & mask_estimated
-        # mask = mask_real
 
         fused = np.zeros_like(depth_real, dtype=np.float32)
         fused[mask] = (
@@ -156,22 +155,8 @@ class DepthFusionProcessor:
         }
         return fused, stats
 
-    def _normalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
-        """
-        Normalizes the depth map to a range of 0-255.
-
-        Args:
-            depth (np.ndarray): Depth map to normalize.
-
-        Returns:
-            np.ndarray: Normalized depth map.
-        """
-        aux_1 = depth - depth.min()
-        aux_2 = depth.max() - depth.min()
-        normalized = (aux_1) / (aux_2) * 255.0
-        return normalized.astype(np.uint8)
-
-    def _fuse_depth_maps(real: np.ndarray,
+    def _fuse_depth_maps(self,
+                         real: np.ndarray,
                          projected_mono: np.ndarray,
                          mode: str = "min") -> np.ndarray:
         """
@@ -186,12 +171,6 @@ class DepthFusionProcessor:
         Returns:
             Fused depth map as a numpy array.
         """
-
-        # Performs conditional fusion:
-        # - If real == 0 → use mono
-        # - If mono == 0 → use real
-        # - Else         → use min(real, mono)
-
         if mode == "min":
             fused = np.where(
                 real == 0,
@@ -222,7 +201,69 @@ class DepthFusionProcessor:
             )
         else:
             raise ValueError(f"Unsupported fusion mode: {mode}")
-        return fused
+        return fused, {}
+
+    def _fuse_maps_mean_std_log(
+        self,
+        depth_real: np.ndarray,
+        depth_estimated: np.ndarray
+    ) -> Tuple[np.ndarray, Dict]:
+        """
+        Fuses two depth maps using mean and standard deviation in log space.
+
+        Args:
+            depth_real (np.ndarray): Real depth map.
+            depth_estimated (np.ndarray): Estimated depth map.
+
+        Returns:
+            Tuple[np.ndarray, Dict]: Fused depth map and statistics.
+        """
+        mask_real = depth_real > 0
+        mask_estimated = depth_estimated > 0
+        if not np.any(mask_real) or not np.any(mask_estimated):
+            raise ValueError("No valid pixels for fusion.")
+
+        estimated_log_mean = np.log(depth_estimated[mask_estimated]).mean()
+        estimated_log_std = np.log(depth_estimated[mask_estimated]).std()
+
+        real_log_mean = np.log(depth_real[mask_real]).mean()
+        real_log_std = np.log(depth_real[mask_real]).std()
+
+        mask = mask_real & mask_estimated
+        # mask = mask_estimated
+
+        fused = np.zeros_like(depth_real, dtype=np.float32)
+        fused[mask] = (
+            (np.log(depth_real[mask]) - real_log_mean) / real_log_std +
+            (np.log(depth_estimated[mask]) - estimated_log_mean) /
+            estimated_log_std
+        ) * estimated_log_std + estimated_log_mean
+
+        fused = np.exp(fused)
+
+        stats = {
+            "real_mean": float(real_log_mean),
+            "real_std": float(real_log_std),
+            "estimated_mean": float(estimated_log_mean),
+            "estimated_std": float(estimated_log_std),
+            "num_valid_pairs": int(np.count_nonzero(mask))
+        }
+        return fused, stats
+
+    def _normalize_png_depth(self, depth: np.ndarray) -> np.ndarray:
+        """
+        Normalizes the depth map to a range of 0-255.
+
+        Args:
+            depth (np.ndarray): Depth map to normalize.
+
+        Returns:
+            np.ndarray: Normalized depth map.
+        """
+        aux_1 = depth - depth.min()
+        aux_2 = depth.max() - depth.min()
+        normalized = (aux_1) / (aux_2) * 255.0
+        return normalized.astype(np.uint8)
 
     def _combine_depth_maps(
         self,
@@ -319,6 +360,22 @@ class DepthFusionProcessor:
             elif mode == 1:
                 # Fuse maps using least squares
                 fused, fusion_stats = self._fuse_maps_least_squares(
+                    depth_real,
+                    depth_estimated
+                )
+            elif mode == 2:
+                # Fuse maps using min, mean, real-priority or mono-priority
+                fused, fusion_stats = self._fuse_depth_maps(
+                    depth_real,
+                    depth_estimated,
+                    mode="min"  # [mono-priority, real-priority, mean]
+                )
+                fusion_stats = {
+                    "fusion_mode": "min"
+                }
+            elif mode == 3:
+                # Fuse maps using mean and std in log space
+                fused, fusion_stats = self._fuse_maps_mean_std_log(
                     depth_real,
                     depth_estimated
                 )
