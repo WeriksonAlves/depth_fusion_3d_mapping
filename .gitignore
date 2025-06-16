@@ -17,7 +17,7 @@ datasets/lab_scene_kinect_xyz/
 # datasets/lab_scene_l/depth_npy/
 # datasets/lab_scene_r/depth_npy/
 
-results/lab_scene_d_2/
+results/lab_scene_d/large/
 results/lab_scene_f/large/
 results/lab_scene_l/large/
 results/lab_scene_r/large/
@@ -32,3 +32,4 @@ theoric/resume.md
 *.bag
 # *.npy
 *.pth
+comparation/results/lab_scene_d2
