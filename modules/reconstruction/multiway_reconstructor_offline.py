@@ -179,6 +179,36 @@ class MultiwayReconstructorOffline:
             json.dump(metrics, f, indent=4)
         print(f"[✓] Metrics saved to: {metrics_path}")
 
+    def _save_trajectory(
+        self,
+        pose_graph: o3d.pipelines.registration.PoseGraph
+    ) -> None:
+        """
+        Saves the camera trajectory (translation vectors from poses) as a
+        point cloud and raw numpy.
+
+        Args:
+            pose_graph (PoseGraph): Optimized pose graph from multiway
+                registration.
+        """
+        trajectory = []
+        for node in pose_graph.nodes:
+            T = node.pose
+            center = T[:3, 3]
+            trajectory.append(center)
+
+        trajectory = np.array(trajectory)
+        traj_pcd = o3d.geometry.PointCloud()
+        traj_pcd.points = o3d.utility.Vector3dVector(trajectory)
+        traj_pcd.paint_uniform_color([1, 0, 0])  # Red for trajectory
+
+        traj_pcd_path = self._output_dir / "camera_trajectory.ply"
+        traj_npy_path = self._output_dir / "camera_trajectory.npy"
+        o3d.io.write_point_cloud(str(traj_pcd_path), traj_pcd)
+        np.save(traj_npy_path, trajectory)
+
+        print(f"[✓] Camera trajectory saved to: {traj_pcd_path}")
+
     def _save_snapshot(self, cloud: o3d.geometry.PointCloud) -> None:
         """Saves a rendered snapshot image of the final cloud."""
         vis = o3d.visualization.Visualizer()
@@ -233,6 +263,7 @@ class MultiwayReconstructorOffline:
         print("[INFO] Merging and saving result...")
         merged = self._merge_and_save(clouds, pose_graph)
         self._save_metrics(merged)
+        self._save_trajectory(pose_graph)
         self._save_snapshot(merged)
 
         o3d.visualization.draw([merged])

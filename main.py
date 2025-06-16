@@ -1,4 +1,6 @@
 from pathlib import Path
+import numpy as np
+import open3d as o3d
 
 from modules.utils.realsense_recorder import RealSenseRecorder
 from modules.reconstruction.multiway_reconstructor_offline import (
@@ -8,6 +10,47 @@ from modules.inference.depth_batch_inferencer import DepthBatchInferencer
 from modules.utils.point_cloud_comparer import PointCloudComparer
 from modules.utils.frame_icp_aligner import FrameICPAlignerBatch
 from modules.utils.depth_fusion_processor import DepthFusionProcessor
+
+
+def visualize_camera_trajectory(
+    trajectory_path: Path,
+    reconstruction_path: Path = None
+) -> None:
+    """
+    Visualizes the camera trajectory as a 3D line plot using Open3D.
+
+    Args:
+        trajectory_path (Path): Path to .npy file with camera centers (N, 3).
+        reconstruction_path (Path, optional): Path to .ply file with the
+            reconstructed scene (optional).
+    """
+    # Load trajectory points
+    trajectory = np.load(trajectory_path)
+    traj_pcd = o3d.geometry.PointCloud()
+    traj_pcd.points = o3d.utility.Vector3dVector(trajectory)
+    traj_pcd.paint_uniform_color([1, 0, 0])  # red
+
+    # Create lines between successive points
+    lines = [[i, i + 1] for i in range(len(trajectory) - 1)]
+    line_set = o3d.geometry.LineSet(
+        points=o3d.utility.Vector3dVector(trajectory),
+        lines=o3d.utility.Vector2iVector(lines)
+    )
+    line_set.colors = o3d.utility.Vector3dVector(
+        [[0, 1, 0] for _ in lines]  # green
+    )
+
+    geometries = [traj_pcd, line_set]
+
+    if reconstruction_path and reconstruction_path.exists():
+        scene = o3d.io.read_point_cloud(str(reconstruction_path))
+        geometries.insert(0, scene)
+
+    print("[INFO] Visualizing trajectory...")
+    o3d.visualization.draw_geometries(
+        geometries,
+        window_name="Camera Trajectory (Red Points + Green Path)"
+    )
 
 
 def run_stage_1_capture_and_reconstruct(
@@ -21,7 +64,7 @@ def run_stage_1_capture_and_reconstruct(
     depth_dir = dataset / "depth_npy"
     intrinsics = dataset / "intrinsics.json"
 
-    output_dir = Path(f"results_new/{scene}/step_1")
+    output_dir = Path(f"results/{scene}/step_1")
     output_pcd = output_dir / "reconstruction_sensor.ply"
 
     print("[INFO] Starting RealSense capture...")
@@ -39,6 +82,12 @@ def run_stage_1_capture_and_reconstruct(
     )
     reconstructor.run()
 
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=output_dir / "camera_trajectory.npy",
+        reconstruction_path=output_pcd
+    )
+
 
 def run_stage_2_monocular_inference_and_reconstruction(
     scene: str,
@@ -47,7 +96,7 @@ def run_stage_2_monocular_inference_and_reconstruction(
     dataset = Path(f"datasets/{scene}")
     rgb_dir = dataset / "rgb"
     intrinsics = dataset / "intrinsics.json"
-    output_dir = Path(f"results_new/{scene}/step_2")
+    output_dir = Path(f"results/{scene}/step_2")
     checkpoint_dir = Path("checkpoints")
     depth_output = output_dir / "depth_npy"
     output_pcd = output_dir / "reconstruction_est.ply"
@@ -72,13 +121,19 @@ def run_stage_2_monocular_inference_and_reconstruction(
     )
     reconstructor.run()
 
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=output_dir / "camera_trajectory.npy",
+        reconstruction_path=output_pcd
+    )
+
 
 def run_stage_3_alignment_and_fusion(
     scene: str,
     voxel_size: float = 0.02
 ) -> None:
     dataset = Path(f"datasets/{scene}")
-    results = Path(f"results_new/{scene}")
+    results = Path(f"results/{scene}")
     rgb_dir = dataset / "rgb"
     depth_real = dataset / "depth_npy"
     depth_est = results / "step_2/depth_npy"
@@ -121,6 +176,12 @@ def run_stage_3_alignment_and_fusion(
     )
     reconstructor.run()
 
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=output_dir / "camera_trajectory.npy",
+        reconstruction_path=output_dir / "reconstruction.ply"
+    )
+
 
 def run_compare_sensor_vs_estimated(
     scene: str,
@@ -129,7 +190,7 @@ def run_compare_sensor_vs_estimated(
     """
     Visual comparison of point clouds: sensor vs monocular model.
     """
-    results = Path(f"results_new/{scene}")
+    results = Path(f"results/{scene}")
     path_sensor = results / "step_1/reconstruction_sensor.ply"
     path_est = results / "step_2/reconstruction_est.ply"
 
@@ -138,14 +199,15 @@ def run_compare_sensor_vs_estimated(
 
 
 def main() -> None:
-    scene = "lab_scene_kinect_xyz"
+    scene = "lab_scene_f"
     print(f"[✓] Running pipeline for scene: {scene}")
 
-    # run_stage_1_capture_and_reconstruct(scene, max_frames=60, fps=15,
-    #                                     voxel_size=0.02)
-    run_stage_2_monocular_inference_and_reconstruction(scene, voxel_size=0.05)
-    # run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
-    # run_compare_sensor_vs_estimated(scene, offset=False)
+    run_stage_1_capture_and_reconstruct(scene, max_frames=60,
+                                        fps=15, voxel_size=0.02)
+    run_stage_2_monocular_inference_and_reconstruction(scene,
+                                                       voxel_size=0.05)
+    run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
+    run_compare_sensor_vs_estimated(scene, offset=False)
 
 
 if __name__ == "__main__":
