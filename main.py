@@ -85,14 +85,14 @@ def stage3(scene: str, voxel_size=0.02) -> None:
         min_depth=0.01,
         max_depth=5.0
     )
-    # batch.run(scale+0.1)
+    batch.run(scale)
 
     processor = DepthFusionProcessor(
         depth_real_dir=depth_sensor_dir,
         depth_estimated_dir=depth_estimation_dir,
         output_dir=output_dir / "both",
     )
-    # processor.run(0)
+    processor.run(0)
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir=rgb_dir,
@@ -121,18 +121,16 @@ def run_compare_d5(
 
 if __name__ == "__main__":
     scene = "lab_scene_d"
-    voxel_size = 0.1
-
     print(f"Running pipeline for scene: {scene}")
 
     # Stage 1: Capture and reconstruct using RealSense depth
-    stage1(scene, max_frames=60, fps=15, voxel_size=voxel_size)
+    # stage1(scene, max_frames=60, fps=15, voxel_size=0.02)
 
     # # Stage 2: Infer depth using monocular model and reconstruct
-    # stage2(scene, voxel_size=voxel_size)
+    stage2(scene, voxel_size=0.05)
 
     # # Stage 3: Align frames using ICP and fuse depth maps
-    # stage3(scene, voxel_size=voxel_size)
+    stage3(scene, voxel_size=0.01)
 
     # modules/reconstruction/rgbd_loader.py # Read .ply
 
