@@ -57,7 +57,7 @@ class FrameICPAlignerBatch:
             if not path.exists():
                 raise FileNotFoundError(f"Missing path: {path}")
         self._output_dir.mkdir(parents=True, exist_ok=True)
-        self._ply_path = self._output_dir / "depth_ply"
+        self._ply_path = self._output_dir / "depth_aligned_ply"
         self._ply_path.mkdir(parents=True, exist_ok=True)
 
     def _rotate_point_clouds(

@@ -6,8 +6,8 @@ from modules.reconstruction.multiway_reconstructor_offline import (
 )
 from modules.inference.depth_batch_inferencer import DepthBatchInferencer
 from modules.utils.point_cloud_comparer import PointCloudComparer
-from modules.align.frame_icp_aligner import FrameICPAlignerBatch
-from modules.fusion.depth_fusion_processor import DepthFusionProcessor
+from modules.utils.frame_icp_aligner import FrameICPAlignerBatch
+from modules.utils.depth_fusion_processor import DepthFusionProcessor
 
 
 def stage1(scene: str, max_frames=60, fps=15, voxel_size=0.02) -> None:
@@ -19,13 +19,13 @@ def stage1(scene: str, max_frames=60, fps=15, voxel_size=0.02) -> None:
     output_dir = Path(f"results_new/{scene}/step_1")
     output_pcd_path = output_dir / "reconstruction_sensor.ply"
 
-    # recorder = RealSenseRecorder(
-    #     output_path=dataset_base,
-    #     max_frames=max_frames,
-    #     fps=fps
-    # )
-    # recorder.start()
-    # recorder.capture()
+    recorder = RealSenseRecorder(
+        output_path=dataset_base,
+        max_frames=max_frames,
+        fps=fps
+    )
+    recorder.start()
+    recorder.capture()
 
     reconstructor = MultiwayReconstructorOffline(
         rgb_dir, depth_dir, intrinsics_path, output_dir,
@@ -94,6 +94,16 @@ def stage3(scene: str, voxel_size=0.02) -> None:
     )
     processor.run(0)
 
+    reconstructor = MultiwayReconstructorOffline(
+        rgb_dir=rgb_dir,
+        depth_dir=output_dir / "both/npy",
+        intrinsics_path=intrinsics_path,
+        output_dir=output_dir / "reconstruction",
+        output_pcd_path=output_dir / "reconstruction.ply",
+        voxel_size=voxel_size
+    )
+    reconstructor.run()
+
 
 def run_compare_d5(
     scene: str,
@@ -109,58 +119,24 @@ def run_compare_d5(
     comparer.run([path_mono, path_d435], mode=0)
 
 
-def run_fused_reconstruction_d9(
-    scene: str,
-    scale: int = 100,
-    trunc: float = 3.0,
-    mode: str = "min",
-    voxel_size: float = 0.02
-) -> None:
-    """
-    Reconstructs from fused depth maps.
-    """
-    results = Path(f"results_new/{scene}")
-    output = results / "d8/fused_depth"
-
-    reconstructor = MultiwayReconstructorOffline(
-        rgb_dir=Path(f"datasets/{scene}/rgb"),
-        depth_dir=output,
-        intrinsics_path=Path(f"datasets/{scene}/intrinsics.json"),
-        output_dir=Path(f"results_new/{scene}/d9_2"),
-        output_pcd_path=Path(f"results_new/{scene}/d9/reconstruction_fused.ply"),
-        voxel_size=voxel_size
-    )
-    reconstructor.run()
-
-
-def run_pipeline_sequence() -> None:
-    """
-    Executes a full pipeline step-by-step.
-    """
+if __name__ == "__main__":
     scene = "lab_scene_r"
     voxel_size = 0.02
 
     print(f"Running pipeline for scene: {scene}")
 
     # Stage 1: Capture and reconstruct using RealSense depth
-    # stage1(scene, max_frames=60, fps=15, voxel_size=voxel_size)
+    stage1(scene, max_frames=60, fps=15, voxel_size=voxel_size)
 
     # # Stage 2: Infer depth using monocular model and reconstruct
-    # stage2(scene, voxel_size=voxel_size)
+    stage2(scene, voxel_size=voxel_size)
 
     # # Stage 3: Align frames using ICP and fuse depth maps
     stage3(scene, voxel_size=voxel_size)
 
     # modules/reconstruction/rgbd_loader.py # Read .ply
-    # run_fused_reconstruction_d9(
-    #     scene,
-    #     voxel_size
-    # )
+    
     # run_compare_d5(
     #     scene,
     #     offset_apply=False
     # )
-
-
-if __name__ == "__main__":
-    run_pipeline_sequence()
