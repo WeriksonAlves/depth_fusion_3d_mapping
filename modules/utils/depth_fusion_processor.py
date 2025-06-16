@@ -171,6 +171,59 @@ class DepthFusionProcessor:
         normalized = (aux_1) / (aux_2) * 255.0
         return normalized.astype(np.uint8)
 
+    def _fuse_depth_maps(real: np.ndarray,
+                         projected_mono: np.ndarray,
+                         mode: str = "min") -> np.ndarray:
+        """
+        Fuses real and projected monocular depth maps.
+
+        Args:
+            real: Real depth map (e.g., from D435).
+            projected_mono: Projected monocular depth map.
+            mode: Fusion mode, 'min', 'mean', 'real-priority' and
+                mono-priority.
+
+        Returns:
+            Fused depth map as a numpy array.
+        """
+
+        # Performs conditional fusion:
+        # - If real == 0 → use mono
+        # - If mono == 0 → use real
+        # - Else         → use min(real, mono)
+
+        if mode == "min":
+            fused = np.where(
+                real == 0,
+                projected_mono,
+                np.where((real > 0) & (projected_mono > 0),
+                         np.minimum(real, projected_mono),
+                         real)
+            )
+        elif mode == "mean":
+            fused = np.where(
+                real == 0,
+                projected_mono,
+                np.where((real > 0) & (projected_mono > 0),
+                         (real + projected_mono) / 2.0,
+                         real)
+            )
+        elif mode == "real-priority":
+            fused = np.where(
+                real > 0,
+                real,
+                projected_mono
+            )
+        elif mode == "mono-priority":
+            fused = np.where(
+                projected_mono > 0,
+                projected_mono,
+                real
+            )
+        else:
+            raise ValueError(f"Unsupported fusion mode: {mode}")
+        return fused
+
     def _combine_depth_maps(
         self,
         depth_real: np.ndarray,
