@@ -14,10 +14,12 @@ from modules.utils.depth_fusion_processor import DepthFusionProcessor
 
 def visualize_camera_trajectory(
     trajectory_path: Path,
-    reconstruction_path: Path = None
+    reconstruction_path: Path = None,
+    axis_size: float = 0.1,
+    axis_every: int = 1  # mostra eixo em todo ponto (ou a cada N)
 ) -> None:
     """
-    Visualizes the camera trajectory as a 3D line plot using Open3D.
+    Visualizes the camera trajectory with coordinate axes and optional scene.
 
     Args:
         trajectory_path (Path): Path to .npy file with camera centers (N, 3).
@@ -26,11 +28,13 @@ def visualize_camera_trajectory(
     """
     # Load trajectory points
     trajectory = np.load(trajectory_path)
+
+    # Point cloud of camera centers (red dots)
     traj_pcd = o3d.geometry.PointCloud()
     traj_pcd.points = o3d.utility.Vector3dVector(trajectory)
     traj_pcd.paint_uniform_color([1, 0, 0])  # red
 
-    # Create lines between successive points
+    # Line path (green)
     lines = [[i, i + 1] for i in range(len(trajectory) - 1)]
     line_set = o3d.geometry.LineSet(
         points=o3d.utility.Vector3dVector(trajectory),
@@ -40,16 +44,28 @@ def visualize_camera_trajectory(
         [[0, 1, 0] for _ in lines]  # green
     )
 
-    geometries = [traj_pcd, line_set]
+    # Coordinate frames along trajectory
+    axes = []
+    for i, pos in enumerate(trajectory):
+        if i % axis_every == 0:
+            axis = o3d.geometry.TriangleMesh.create_coordinate_frame(
+                size=axis_size if i != 0 else 1,
+                origin=pos.tolist()
+            )
+            axes.append(axis)
 
+    geometries = [traj_pcd, line_set] + axes
+
+    # Optional scene overlay
     if reconstruction_path and reconstruction_path.exists():
         scene = o3d.io.read_point_cloud(str(reconstruction_path))
         geometries.insert(0, scene)
+        scene.rotate(o3d.geometry.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
 
-    print("[INFO] Visualizing trajectory...")
+    print("[INFO] Visualizing trajectory with axes...")
     o3d.visualization.draw_geometries(
         geometries,
-        window_name="Camera Trajectory (Red Points + Green Path)"
+        window_name="Camera Trajectory with Axes"
     )
 
 
@@ -193,7 +209,8 @@ def visualize_trajectory_and_reconstruction(
     visualize_camera_trajectory(
         trajectory_path=Path(f"results/{scene}/step_1/camera_trajectory.npy"),
         reconstruction_path=Path(
-            f"results/{scene}/step_1/reconstruction_sensor.ply")
+            f"results/{scene}/step_1/reconstruction_sensor.ply"
+            ) if recosnstruction else None
     )
 
     print("[INFO] Visualizing estimated trajectory...")
@@ -201,12 +218,13 @@ def visualize_trajectory_and_reconstruction(
         trajectory_path=Path(
             f"results/{scene}/step_3/reconstruction/camera_trajectory.npy"),
         reconstruction_path=Path(
-            f"results/{scene}/step_3/reconstruction/reconstruction.ply")
+            f"results/{scene}/step_3/reconstruction/reconstruction.ply"
+            ) if recosnstruction else None
     )
 
 
 def main() -> None:
-    scene = "lab_scene_r"
+    scene = "lab_scene_d"
     recoder_bool = False  # Set to True to record new data
     voxel_size = 0.05  # Adjust voxel size as needed
     stage = 4
@@ -221,7 +239,7 @@ def main() -> None:
     elif stage == 3:
         run_stage_3_alignment_and_fusion(scene, voxel_size)
     elif stage == 4:
-        visualize_trajectory_and_reconstruction(scene, False)
+        visualize_trajectory_and_reconstruction(scene, True)
     else:
         run_compare_sensor_vs_estimated(scene, offset=False)
 
