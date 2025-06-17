@@ -57,7 +57,8 @@ def run_stage_1_capture_and_reconstruct(
     scene: str,
     max_frames: int = 60,
     fps: int = 15,
-    voxel_size: float = 0.02
+    voxel_size: float = 0.02,
+    recoder_bool: bool = False
 ) -> None:
     dataset = Path(f"datasets/{scene}")
     rgb_dir = dataset / "rgb"
@@ -73,8 +74,9 @@ def run_stage_1_capture_and_reconstruct(
         max_frames=max_frames,
         fps=fps
     )
-    # recorder.start()
-    # recorder.capture()
+    if recoder_bool:
+        recorder.start()
+        recorder.capture()
 
     print("[INFO] Running reconstruction using sensor depth...")
     reconstructor = MultiwayReconstructorOffline(
@@ -84,7 +86,7 @@ def run_stage_1_capture_and_reconstruct(
 
     print("[INFO] Visualizing camera trajectory...")
     visualize_camera_trajectory(
-        trajectory_path=output_dir / "camera_trajectory.npy",
+        trajectory_path=Path(f"results/{scene}/step_1/camera_trajectory.npy"),
         reconstruction_path=output_pcd
     )
 
@@ -123,7 +125,7 @@ def run_stage_2_monocular_inference_and_reconstruction(
 
     print("[INFO] Visualizing camera trajectory...")
     visualize_camera_trajectory(
-        trajectory_path=output_dir / "camera_trajectory.npy",
+        trajectory_path=Path(f"results/{scene}/step_2/camera_trajectory.npy"),
         reconstruction_path=output_pcd
     )
 
@@ -139,7 +141,7 @@ def run_stage_3_alignment_and_fusion(
     depth_est = results / "step_2/depth_npy"
     intrinsics = dataset / "intrinsics.json"
     output_dir = results / "step_3"
-    fused_dir = output_dir / "both"
+    fused_dir = output_dir / "mean_std_fused"
 
     print("[INFO] Running ICP alignment and scale estimation...")
     batch = FrameICPAlignerBatch(
@@ -155,7 +157,7 @@ def run_stage_3_alignment_and_fusion(
         min_depth=0.01,
         max_depth=5.0
     )
-    batch.run(scale)
+    # batch.run(1/scale)
 
     print("[INFO] Fusing depth maps (real and estimated)...")
     fusion = DepthFusionProcessor(
@@ -163,7 +165,7 @@ def run_stage_3_alignment_and_fusion(
         depth_estimated_dir=depth_est,
         output_dir=fused_dir
     )
-    fusion.run(0)
+    fusion.run(mode=4)
 
     print("[INFO] Reconstructing from fused depth...")
     reconstructor = MultiwayReconstructorOffline(
@@ -178,7 +180,7 @@ def run_stage_3_alignment_and_fusion(
 
     print("[INFO] Visualizing camera trajectory...")
     visualize_camera_trajectory(
-        trajectory_path=output_dir / "camera_trajectory.npy",
+        trajectory_path=output_dir / "reconstruction/camera_trajectory.npy",
         reconstruction_path=output_dir / "reconstruction.ply"
     )
 
@@ -199,14 +201,15 @@ def run_compare_sensor_vs_estimated(
 
 
 def main() -> None:
-    scene = "lab_scene_lab"
+    scene = "lab_scene_f"
+    recoder_bool = False  # Set to True to record new data
+    voxel_size = 0.075  # Adjust voxel size as needed
     print(f"[✓] Running pipeline for scene: {scene}")
 
-    run_stage_1_capture_and_reconstruct(scene, max_frames=25,
-                                        fps=4, voxel_size=0.02)
-    # run_stage_2_monocular_inference_and_reconstruction(scene,
-    #                                                    voxel_size=0.05)
-    # run_stage_3_alignment_and_fusion(scene, voxel_size=0.01)
+    # run_stage_1_capture_and_reconstruct(
+    #     scene, 100, 4, voxel_size, recoder_bool)
+    # run_stage_2_monocular_inference_and_reconstruction(scene, voxel_size)
+    run_stage_3_alignment_and_fusion(scene, voxel_size)
     # run_compare_sensor_vs_estimated(scene, offset=False)
 
 
