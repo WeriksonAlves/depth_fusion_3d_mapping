@@ -84,12 +84,6 @@ def run_stage_1_capture_and_reconstruct(
     )
     reconstructor.run()
 
-    print("[INFO] Visualizing camera trajectory...")
-    visualize_camera_trajectory(
-        trajectory_path=Path(f"results/{scene}/step_1/camera_trajectory.npy"),
-        reconstruction_path=output_pcd
-    )
-
 
 def run_stage_2_monocular_inference_and_reconstruction(
     scene: str,
@@ -122,12 +116,6 @@ def run_stage_2_monocular_inference_and_reconstruction(
         voxel_size=voxel_size
     )
     reconstructor.run()
-
-    print("[INFO] Visualizing camera trajectory...")
-    visualize_camera_trajectory(
-        trajectory_path=Path(f"results/{scene}/step_2/camera_trajectory.npy"),
-        reconstruction_path=output_pcd
-    )
 
 
 def run_stage_3_alignment_and_fusion(
@@ -173,16 +161,10 @@ def run_stage_3_alignment_and_fusion(
         depth_dir=fused_dir / "npy",
         intrinsics_path=intrinsics,
         output_dir=output_dir / "reconstruction",
-        output_pcd_path=output_dir / "reconstruction.ply",
+        output_pcd_path=output_dir / "reconstruction/reconstruction.ply",
         voxel_size=voxel_size
     )
     reconstructor.run()
-
-    print("[INFO] Visualizing camera trajectory...")
-    visualize_camera_trajectory(
-        trajectory_path=output_dir / "reconstruction/camera_trajectory.npy",
-        reconstruction_path=output_dir / "reconstruction.ply"
-    )
 
 
 def run_compare_sensor_vs_estimated(
@@ -200,20 +182,49 @@ def run_compare_sensor_vs_estimated(
     comparer.run([path_est, path_sensor], mode=0)
 
 
-def main() -> None:
-    scene = "lab_scene_f"
-    recoder_bool = False  # Set to True to record new data
-    voxel_size = 0.075  # Adjust voxel size as needed
-    print(f"[✓] Running pipeline for scene: {scene}")
+def visualize_trajectory_and_reconstruction(
+    scene: str,
+    recosnstruction: bool = True
+) -> None:
+    """
+    Visualizes the camera trajectory and reconstruction point cloud.
+    """
+    print("[INFO] Visualizing camera trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=Path(f"results/{scene}/step_1/camera_trajectory.npy"),
+        reconstruction_path=Path(
+            f"results/{scene}/step_1/reconstruction_sensor.ply")
+    )
 
-    # run_stage_1_capture_and_reconstruct(
-    #     scene, 100, 4, voxel_size, recoder_bool)
-    # run_stage_2_monocular_inference_and_reconstruction(scene, voxel_size)
-    run_stage_3_alignment_and_fusion(scene, voxel_size)
-    # run_compare_sensor_vs_estimated(scene, offset=False)
+    print("[INFO] Visualizing estimated trajectory...")
+    visualize_camera_trajectory(
+        trajectory_path=Path(
+            f"results/{scene}/step_3/reconstruction/camera_trajectory.npy"),
+        reconstruction_path=Path(
+            f"results/{scene}/step_3/reconstruction/reconstruction.ply")
+    )
+
+
+def main() -> None:
+    scene = "lab_scene_r"
+    recoder_bool = False  # Set to True to record new data
+    voxel_size = 0.05  # Adjust voxel size as needed
+    stage = 4
+    print(f"[✓] Running pipeline for scene: {scene}")
+    print(f"[✓] Executing stage: {stage}")
+
+    if stage == 1:
+        run_stage_1_capture_and_reconstruct(scene, 100, 4, voxel_size,
+                                            recoder_bool)
+    elif stage == 2:
+        run_stage_2_monocular_inference_and_reconstruction(scene, voxel_size)
+    elif stage == 3:
+        run_stage_3_alignment_and_fusion(scene, voxel_size)
+    elif stage == 4:
+        visualize_trajectory_and_reconstruction(scene, False)
+    else:
+        run_compare_sensor_vs_estimated(scene, offset=False)
 
 
 if __name__ == "__main__":
     main()
-
-    # modules/reconstruction/rgbd_loader.py # Read .ply
