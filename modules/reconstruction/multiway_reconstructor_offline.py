@@ -237,8 +237,8 @@ class MultiwayReconstructorOffline:
         print("[INFO] Building pose graph...")
         dist_coarse = self._voxel_size * 15.0
         dist_fine = self._voxel_size * 1.5
-        for pcd in clouds:
-            pcd.rotate(pcd.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
+        # for pcd in clouds:
+        #     pcd.rotate(pcd.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
         with o3d.utility.VerbosityContextManager(
                 o3d.utility.VerbosityLevel.Debug) as cm:
             pose_graph = self._build_pose_graph(clouds, dist_coarse, dist_fine)
