@@ -224,10 +224,10 @@ def visualize_trajectory_and_reconstruction(
 
 
 def main() -> None:
-    scene = "validate_rs_L_high"
+    scene = "validate_rs_L_low"
     recoder_bool = False  # Set to True to record new data
-    voxel_size = 0.05  # Adjust voxel size as needed
-    stage = 3
+    voxel_size = 0.07  # Adjust voxel size as needed
+    stage = 4
     print(f"[✓] Running pipeline for scene: {scene}")
     print(f"[✓] Executing stage: {stage}")
 
