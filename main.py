@@ -60,7 +60,7 @@ def visualize_camera_trajectory(
     if reconstruction_path and reconstruction_path.exists():
         scene = o3d.io.read_point_cloud(str(reconstruction_path))
         geometries.insert(0, scene)
-        # scene.rotate(o3d.geometry.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
+        scene.rotate(o3d.geometry.get_rotation_matrix_from_xyz((np.pi, 0, 0)))
 
     print("[INFO] Visualizing trajectory with axes...")
     o3d.visualization.draw_geometries(
@@ -224,9 +224,9 @@ def visualize_trajectory_and_reconstruction(
 
 
 def main() -> None:
-    scene = "validate_rs_L_low"
+    scene = "validate_rs_Is_low"
     recoder_bool = False  # Set to True to record new data
-    voxel_size = 0.07  # Adjust voxel size as needed
+    voxel_size = 0.05  # Adjust voxel size as needed
     stage = 4
     print(f"[✓] Running pipeline for scene: {scene}")
     print(f"[✓] Executing stage: {stage}")
