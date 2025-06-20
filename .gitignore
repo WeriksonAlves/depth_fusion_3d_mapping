@@ -4,25 +4,9 @@ Depth_Anything_V2
 # Ignore Python bytecode files
 __pycache__/
 
-# Ignore Jupyter Notebook checkpoints
-.ipynb_checkpoints/
-
 # Ignore virtual environment directories
 .venv/
 
 # Ignore specific directories and files
-results/lab_scene_d/large/
-results/lab_scene_f/large/
-results/lab_scene_l/large/
-results/lab_scene_r/large/
 
-theoric/roteiro.md
-theoric/resume.md
-
-# # Ignore common data formats and model files
-*.zip
-# *.ply
-*.pcd
-*.bag
-# *.npy
-*.pth
+# Ignore common data formats and model files

@@ -53,6 +53,7 @@ class RealSenseRecorder:
 
         self.width = width
         self.height = height
+        self.align = rs.align(rs.stream.color)
         self.max_frames = max_frames
         self.fps = fps
         self.warmup_sec = warmup_sec
@@ -64,10 +65,10 @@ class RealSenseRecorder:
         self.pipeline = rs.pipeline()
         self.config = rs.config()
         self.config.enable_stream(
-            rs.stream.color, width, height, rs.format.bgr8, fps
+            rs.stream.color, width, height, rs.format.bgr8, 30
         )
         self.config.enable_stream(
-            rs.stream.depth, width, height, rs.format.z16, fps
+            rs.stream.depth, width, height, rs.format.z16, 30
         )
 
     def start(self) -> None:
@@ -151,7 +152,7 @@ class RealSenseRecorder:
         cv2.imwrite(str(self.rgb_dir / f"{name}.png"), color)
         cv2.imwrite(
             str(self.depth_png_dir / f"{name}.png"),
-            (self.normalize_png_depth(depth)).astype(np.uint16)
+            self.normalize_png_depth(depth)
         )
         np.save(self.depth_npy_dir / f"{name}.npy", depth)
 
@@ -166,8 +167,9 @@ class RealSenseRecorder:
         try:
             while frame_count < self.max_frames:
                 frames = self.pipeline.wait_for_frames()
-                depth_frame = frames.get_depth_frame()
-                color_frame = frames.get_color_frame()
+                aligned_frames = self.align.process(frames)  # novo
+                depth_frame = aligned_frames.get_depth_frame()
+                color_frame = aligned_frames.get_color_frame()
                 now = time.time()
 
                 if not depth_frame or not color_frame:
