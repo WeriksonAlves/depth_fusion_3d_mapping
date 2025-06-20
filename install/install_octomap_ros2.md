@@ -8,7 +8,6 @@ Projeto para reconstrução 3D com base em imagens monoculares utilizando estima
 
 Este sistema realiza:
 
-- Estimativa de profundidade com **DepthAnythingV2**.
 - Geração e visualização de nuvens de pontos com **Open3D**.
 - Publicação das nuvens no ROS 2 usando **PointCloud2**.
 - Mapeamento 3D com **`octomap_server`** e visualização no **RViz**.

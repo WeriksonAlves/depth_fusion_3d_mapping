@@ -8,11 +8,5 @@ __pycache__/
 .venv/
 
 # Ignore specific directories and files
-results/test_rs_diagonal_0.06/large/
-results/test_rs_front_0.075/large/
-results/test_rs_rotate_0.05/large/
-results/test_rs_side_0.070/large/
-
-theoric/
 
 # Ignore common data formats and model files
