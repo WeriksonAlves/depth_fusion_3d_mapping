@@ -171,15 +171,15 @@ def visualize_trajectory_and_reconstruction(scene: str,
 
 
 def main() -> None:
-    scene = "validate_rs_Il_low_0.09"
+    scene = "demonstration"
     record = False
-    voxel_size = 0.09
+    voxel_size = 0.02
     stage = 4
 
     print(f"[✓] Running pipeline for: {scene} | Stage: {stage}")
 
     if stage == 1:
-        run_stage_1_capture_and_reconstruct(scene, 100, 4, voxel_size, record)
+        run_stage_1_capture_and_reconstruct(scene, 100, 4, record, voxel_size)
     elif stage == 2:
         run_stage_2_monocular_inference_and_reconstruction(scene, voxel_size)
     elif stage == 3:

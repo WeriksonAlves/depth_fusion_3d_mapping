@@ -1,0 +1,67 @@
+[
+    {
+        "frame": "fused_depth_0000",
+        "depth_min_m": 1.1783195734024048,
+        "depth_max_m": 6.495798110961914,
+        "depth_mean_m": 2.9972081184387207,
+        "depth_std_m": 1.396794319152832,
+        "stats_method": {
+            "real_mean": 2.99720739018472,
+            "real_std": 1.3967942657854944,
+            "estimated_mean": 2.3084545135498047,
+            "estimated_std": 1.415415644645691
+        }
+    },
+    {
+        "frame": "fused_depth_0001",
+        "depth_min_m": 1.1825447082519531,
+        "depth_max_m": 8.044946670532227,
+        "depth_mean_m": 2.981799840927124,
+        "depth_std_m": 1.366267204284668,
+        "stats_method": {
+            "real_mean": 2.981800039012103,
+            "real_std": 1.3662672237548534,
+            "estimated_mean": 2.1514480113983154,
+            "estimated_std": 1.3352525234222412
+        }
+    },
+    {
+        "frame": "fused_depth_0002",
+        "depth_min_m": 1.2867982387542725,
+        "depth_max_m": 9.252654075622559,
+        "depth_mean_m": 3.0229249000549316,
+        "depth_std_m": 1.3699461221694946,
+        "stats_method": {
+            "real_mean": 3.0229246350590917,
+            "real_std": 1.369945994926555,
+            "estimated_mean": 1.9618052244186401,
+            "estimated_std": 1.2609949111938477
+        }
+    },
+    {
+        "frame": "fused_depth_0003",
+        "depth_min_m": 1.3105714321136475,
+        "depth_max_m": 9.203117370605469,
+        "depth_mean_m": 2.9009947776794434,
+        "depth_std_m": 1.3385361433029175,
+        "stats_method": {
+            "real_mean": 2.900994326102374,
+            "real_std": 1.3385359796710246,
+            "estimated_mean": 1.9433408975601196,
+            "estimated_std": 1.3881820440292358
+        }
+    },
+    {
+        "frame": "fused_depth_0004",
+        "depth_min_m": 1.1705976724624634,
+        "depth_max_m": 7.928466796875,
+        "depth_mean_m": 2.770275354385376,
+        "depth_std_m": 1.3011895418167114,
+        "stats_method": {
+            "real_mean": 2.7702757449624693,
+            "real_std": 1.301189521267372,
+            "estimated_mean": 2.064765214920044,
+            "estimated_std": 1.3762621879577637
+        }
+    }
+]
