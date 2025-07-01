@@ -77,6 +77,7 @@ pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118  # cu121 cu128
 pip install -r Depth_Anything_V2/requirements.txt
 pip install open3d opencv-python numpy "numpy<2" pandas
+pip install pyrealsense2
 ```
 
 ---
