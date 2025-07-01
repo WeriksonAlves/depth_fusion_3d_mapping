@@ -1,4 +1,4 @@
-# 🛰️ SIBGRAPI2025\_SLAM
+# 🛰️ Fusing Learned and Sensor-Based Depth for Consistent 3D Mapping
 
 **3D Reconstruction from Monocular Images using Depth Estimation and Point Cloud Fusion**
 Modular pipeline for scene reconstruction from RGB images, leveraging monocular depth inference, point cloud generation, fusion, and visualization using Open3D — all without ROS2.
