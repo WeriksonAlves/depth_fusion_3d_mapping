@@ -124,6 +124,6 @@ main()
 
 ## 👨‍🔬 Author
 
-Developed as part of a research project for **SIBGRAPI 2025**.
+Developed as part of a research project.
 
 > Academic work under the graduate course **INF791 — Computer Vision for 3D Data**
